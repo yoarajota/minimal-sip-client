@@ -4,21 +4,52 @@
 
 **Concept** `C-004` · **archetype** `implementation`.
 
-<!-- Replace this paragraph with the summary from .sota/concept.yaml: what the concept is,
-     in plain language, for a reader who has never heard of it. No adjectives about how good
-     it is — the scorecard below carries that. -->
+A from-scratch SIP client (Go, no SIP library) that implements only the RFC 3261 subset
+needed to register, establish, hold, resume and tear down a two-way RTP call against a
+mainstream PBX — and measures how much of the specification that subset actually is. The
+measurement instrument is the message-trace matrix (`docs/matrix.md`): every implemented
+behaviour traced to the RFC section that forces it, counted against the 590 normative `MUST`
+occurrences in RFC 3261 (E-001).
 
 ## Claim
 
-<!-- The hypothesis from .sota/concept.yaml, verbatim, with its verdict and the evidence that
-     decided it. Every number here carries an E-### ID. -->
+**H-001** — Under the scenario suite (register, two-way RTP call, hold/resume, teardown
+against a pinned Asterisk 20 instance), a from-scratch SIP client requires fewer than half of
+RFC 3261's normative MUST requirements to complete the same suite that PJSIP 2.17 completes in
+full, at the cost of not supporting SIP features outside the suite (forking, presence,
+subscription, NAT traversal, S/MIME). → *verdict: untested* (decided at P5 from the
+message-trace matrix).
 
-**H-001** — TODO. → *verdict: untested*
+*Falsified if* the smallest subset that completes the suite still implements a majority
+(≥ 50%) of the normative MUST requirements.
 
 ## Baseline
 
-Compared against **TODO** (version TODO) because TODO.
-Reproduce the comparison: `TODO` — see [E-001](docs/05-evidence.md#e-001).
+Compared against **PJSIP 2.17** (`pjproject` tag 2.17) because it is the mainstream full SIP
+stack: it completes 100% of the scenario suite by construction, so it is the honest point of
+comparison for "how small can the load-bearing subset be?". The comparison is not about speed —
+it is about the size of the subset that still completes the same suite.
+
+## Public interface
+
+The component is the Go package `internal/sip` (design decision [D-001](docs/adr/D-001-public-surface.md)):
+
+```go
+cfg := sip.Config{Server: "pbx:5060", Domain: "pbx", User: "alice", Password: "secret", RTPPort: 40000}
+c, err := sip.New(cfg)
+ctx := context.Background()
+
+err = c.Register(ctx)                 // REGISTER -> 401 -> REGISTER+Authorization -> 200
+call, err := c.Call(ctx, "100")       // INVITE -> 180 -> 200 (SDP) -> ACK
+stats := call.MediaPhase(3*time.Second, true)  // sent/recv RTP packet counts
+err = call.Hold(ctx)                  // re-INVITE(a=sendonly) -> 200 (answer recvonly)
+err = call.Resume(ctx)                // re-INVITE(a=sendrecv) -> 200 (answer sendrecv)
+err = call.Hangup(ctx)                // BYE -> 200
+for _, e := range c.Trace() { ... }   // message-trace matrix rows
+```
+
+The client is synchronous and per-dialog: one registration, one call. It implements only UAC
+behaviour — the far end is the PBX.
 
 <!-- scorecard:start -->
 <!-- Auto-generated. Do not hand-edit. -->
@@ -26,43 +57,61 @@ Reproduce the comparison: `TODO` — see [E-001](docs/05-evidence.md#e-001).
 
 ## Try it
 
-```bash
-# setup — must work from a clean checkout
-TODO
+Requires Docker (the suite runs against a pinned Asterisk 20 container):
 
-# the headline result in one command
-TODO
+```bash
+# setup — nothing to install; quality tools build into .tools/ on first run
+make quality
+
+# unit suite (hermetic; no Docker needed)
+make test
+
+# the headline result: the full suite against the real PBX, one command
+./run-suite.sh
 ```
 
 ## How it works
 
-<!-- The mechanism, briefly. Link to docs/01-theory.md for the sourced version and to
-     docs/04-tradeoffs.md for the architecture and its tradeoffs. -->
+The client is a deliberate subset of RFC 3261 (see [docs/matrix.md](docs/matrix.md) for the
+full trace). Mechanics: the six mandatory headers in every request (§8.1.1); REGISTER with
+HTTP-digest auth (§10, §22.4); INVITE/offer-answer with an SDP PCMU offer (§13, RFC 4566/3264);
+the transaction layer with RFC timers T1=500ms / T2=4s / T4=5s and the 64×T1 timeout (§17);
+UDP transport to port 5060 (§18); RTP send/receive with the 12-byte header (§RFC 3550). Hold is
+a re-INVITE whose offer is `a=sendonly`, resumed with `a=sendrecv` — there is no SIP-level hold
+method. Sourced and referenced in [docs/01-theory.md](docs/01-theory.md).
 
 ## Evidence
 
 | ID | Claim | Command | Result |
 | :--- | :--- | :--- | :--- |
-| E-001 | TODO | `TODO` | TODO |
+| E-001 | P1 literature survey: RFC 3261 subset mechanism; 590 normative `MUST` occurrences | curl the sources | 8 sources read, MUST count 590 |
+| E-002 | P2 PoC completes the suite against the real PBX | `./poc/run.sh` | exit 0; media 152/152 echo |
+| E-003 | Component unit suite: conformance, failure-mode, property | `make test` | exit 0; 20 tests + fuzz corpus |
+| E-004 | Component integration suite against the real PBX | `./run-suite.sh` | exit 0; register/call/hold/resume/teardown |
 
 Full ledger: [docs/05-evidence.md](docs/05-evidence.md).
 
 ## Limitations
 
-<!-- Mandatory and specific. State the conditions under which this degrades or is
-     the wrong choice, the readiness ceiling it sits under and why, and what the adversarial
-     pass in docs/04-tradeoffs.md found. "May not suit every use case" is not a limitation. -->
-
-- TODO — the condition under which the baseline wins.
-- TODO — what is untested.
-- TODO — what would have to be true to move up a readiness level.
+- **The baseline (PJSIP 2.17) is not yet measured here** — the suite runs the concept client
+  only; the comparative "subset size vs. full stack" measurement lands at P5. Until then the
+  claim rests on the matrix (docs/matrix.md), not on a PJSIP run.
+- **Media is one client against Asterisk's `Echo()` application.** The RTP path is real and
+  two-way (send and receive through the PBX), but there is no second real endpoint; two
+  phones calling each other is untested.
+- **Only UDP transport and PCMU.** No TCP/TLS, no other codecs, no NAT traversal; a PBX that
+  requires TLS or a codec outside PCMU will not complete the suite.
+- **What would move it up a readiness level:** P5's benchmark must count the matrix's forced
+  MUST statements against the 590 denominator and run the comparison against PJSIP 2.17 under
+  declared conditions.
 
 ### What we tried that didn't work
 
-<!-- Filled at P6 from the `dead-end` entries in docs/03-log.md. Often the most useful part of
-     the repository — it is the part nobody else publishes. -->
-
-- TODO
+- The P2 PoC initially sent the INVITE without its SDP body (`Content-Length: 0`) — the call
+  "succeeded" but no media flowed; the integration suite (E-004) caught it, the regression test
+  `TestInviteCarriesBody` now guards it.
+- A re-INVITE whose CSeq collided with the initial INVITE's was answered 491 (Request Pending)
+  — the dialog CSeq must be the CSeq actually used on the wire after the auth retry.
 
 ## Documents
 
@@ -72,9 +121,10 @@ Full ledger: [docs/05-evidence.md](docs/05-evidence.md).
 | [docs/03-log.md](docs/03-log.md) | Append-only working log: what was tried, including what failed. |
 | [docs/04-tradeoffs.md](docs/04-tradeoffs.md) | ATAM-lite: drivers, scenarios, sensitivity and tradeoff points, risks. |
 | [docs/05-evidence.md](docs/05-evidence.md) | Every claim, its command, environment, and observed result. |
+| [docs/matrix.md](docs/matrix.md) | The message-trace matrix: which RFC 3261 sections are load-bearing. |
 | [docs/adr/](docs/adr/) | Decisions and the options rejected. |
 | [.sota/](.sota/) | Machine-readable readiness and quality data. |
 
 ## License
 
-TODO
+TODO — not yet chosen.

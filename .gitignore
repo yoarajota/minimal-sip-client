@@ -9,6 +9,9 @@ build/
 # Compiled binary (the client's own entry point, rebuilt via `make`)
 /minimal-sip-client
 
+# Project-local quality toolchain (rule R10) — rebuilt via `make tools`
+.tools/
+
 # Tool caches
 __pycache__/
 *.pyc

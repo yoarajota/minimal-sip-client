@@ -57,4 +57,4 @@ requests must send the Request-URI as the bare Contact URI and the To tag outsid
 brackets — two PoC bugs (bareURI extraction, tag placement) that cost two debugging rounds
 and are fixed in poc/.
 
-**Disposition:** open
+**Disposition:** promoted: D-001, D-002, D-003, E-003, E-004

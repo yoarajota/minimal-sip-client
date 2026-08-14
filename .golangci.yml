@@ -1,0 +1,20 @@
+# Minimal golangci-lint config: the default safety set plus dupl (the mapped
+# check for CWE-1041 unstructured duplicated code). Style linters stay off —
+# the concept is a minimal implementation, and the gates that matter here are
+# correctness and the ISO/IEC 5055 weakness rows.
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - dupl
+run:
+  timeout: 3m
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - dupl
+        - unused

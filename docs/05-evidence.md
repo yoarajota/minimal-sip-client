@@ -96,6 +96,70 @@ offer's answer `sendrecv`, as RFC 3264 §5.1 requires.
 
 ---
 
+### E-003 — Component unit suite: conformance, failure-mode and property tests
+
+**Claim.** The `internal/sip` component passes its three test layers against the configurable
+fake UAS (D-002): conformance (message parse/build incl. folding, digest RFC 2617 vectors,
+SDP directions, RTP header pack), failure modes from `docs/01-theory.md § 3` (transaction
+timeout → 408, dropped-message retransmission recovery, wrong-branch response ignored,
+non-2xx final → transaction-layer ACK, 401 challenge on REGISTER and INVITE, rejected call),
+and property/edge (parser fuzz never panics, CSeq monotonicity, INVITE carries its SDP body).
+Supports S-002 (fault-tolerance) and TRL 4 for `core`.
+
+**Environment:** Go 1.22.2 on Linux (Ubuntu 24.04), no network, no Docker required.
+
+```bash
+make test     # from the repository root; exits 0 when the suite passes
+```
+
+**Result:** exit 0. `ok github.com/yoarajota/minimal-sip-client/internal/sip` — 20 tests and a
+fuzz seed corpus pass (observed 2026-08-14). Key failure-mode behaviours verified: a silent
+server yields a 408-class `TransactionError`; a dropped first request is recovered by
+Timer E retransmission; a foreign-branch response is ignored; a 404 to an INVITE produces the
+transaction-layer ACK with the same branch and method ACK; wrong credentials surface the 401.
+
+**Status:** reproducing
+**Supports:** H-001, S-002, TRL 4 for `core`
+**Recorded:** 2026-08-14
+
+---
+
+### E-004 — Component integration suite against the real PBX
+
+**Claim.** The `internal/sip` component completes the scenario suite against a real, pinned
+Asterisk 20 PBX in containers — the relevant environment (TRL 5): register with digest auth,
+two-way RTP call, hold/resume via re-INVITE, teardown. Supports S-001 (functional
+completeness) and TRL 5 for `core`.
+
+**Environment:** Docker Desktop daemon 29.6.1 (WSL2 backend), docker compose v5.3.0. Images:
+`andrius/asterisk:20.7-cert11_debian-trixie` (Asterisk certified 20.7-cert11) and
+`golang:1.22-alpine`; client compiled with Go 1.22.2. Client and PBX on one compose network;
+PBX config in `poc/asterisk/` (pjsip.conf endpoint `alice`, digest `userpass`; extensions.conf
+`100` → Answer+Echo; rtp.conf ports 10000–10050).
+
+```bash
+./run-suite.sh     # from the repository root; exit 0 = suite passed
+```
+
+**Result:** exit 0. `--- PASS: TestSuiteIntegration`. Observed trace:
+
+```
+register: REGISTER -> 401 -> REGISTER+Authorization -> 200
+invite:   INVITE -> 180 -> 200 (SDP answer) -> ACK
+hold:     re-INVITE(sendonly) -> 200 (answer recvonly) -> ACK
+resume:   re-INVITE(sendrecv) -> 200 (answer sendrecv) -> ACK
+bye:      BYE -> 200
+```
+
+RTP (PCMU, 440 Hz tone, 20 ms packets): active phase sent 152 / received 152 (echo symmetry
+through Asterisk `Echo()`); held phase received 0; resumed phase sent 102 / received 102.
+
+**Status:** reproducing
+**Supports:** H-001, S-001, TRL 5 for `core`
+**Recorded:** 2026-08-14
+
+---
+
 <!-- Template for further entries:
 
 ### E-002 — title

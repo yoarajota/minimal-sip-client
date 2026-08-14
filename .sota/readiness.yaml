@@ -1,28 +1,54 @@
 components:
 - id: core
   role: concept
-  trl: 3
+  trl: 5
   evidence_refs:
   - E-001
   - E-002
+  - E-003
+  - E-004
   notes: 'The from-scratch SIP client: a minimal RFC 3261 implementation (register, call establishment,
-    hold/resume, teardown) carrying RTP media, plus the message-trace matrix that maps each implemented
-    behaviour to the RFC section forcing it. TRL 3: the P2 proof of concept in poc/ completes the scenario
-    suite against a real Asterisk 20 PBX (E-002): REGISTER with digest auth, two-way RTP call, hold/resume
-    via re-INVITE, teardown, one command, exit 0. The P1 prediction of the required flow shape matched
-    (E-001, E-002); the measured message-trace matrix and the load-bearing-subset count land at P3.
+    hold/resume, teardown) carrying RTP media, plus the trace recorder feeding the message-trace matrix.
+    TRL 5: the internal/sip component completes the scenario suite against a real, pinned Asterisk 20
+    PBX — the relevant environment — in containers (E-004, one command, exit 0), and passes the three
+    unit test layers (E-003) and the ISO 5055 quality gate. TRL 4 markers (conformance tests, ADRs D-001–
+    D-003, quality gates) and TRL 5 markers (real transport via the pinned Asterisk container) are both
+    evidenced.
+
+    '
+- id: asterisk
+  role: supporting
+  trl: 9
+  provisioning: container
+  evidence_refs:
+  - E-004
+  notes: 'The pinned Asterisk certified 20.7-cert11 container (andrius/asterisk:20.7-cert11_debian-trixie),
+    configured in poc/asterisk/ (pjsip.conf endpoint alice with digest auth, extensions.conf 100 -> Answer+Echo,
+    rtp.conf 10000-10050). Production-grade PBX software; the suite runs against it as the relevant environment.
+
+    '
+- id: client-runtime
+  role: host
+  trl: 5
+  provisioning: container
+  evidence_refs:
+  - E-004
+  notes: 'golang:1.22-alpine container running the compiled client; Go 1.22.2 toolchain builds it from
+    the repository root. Containerised so the whole suite is reproducible from a clean machine.
 
     '
 integrations: []
 not_applicable: []
 computed:
-  composite_srl: 0.3333
-  translated_srl: 4
+  composite_srl: 0.7037
+  translated_srl: 7
   strict_srl: null
   component_srl:
-    core: 0.3333
-  weakest_component: core (0.3333)
+    core: 0.5556
+    asterisk: 1.0
+    client-runtime: 0.5556
+  weakest_component: core (0.5556)
   weakest_integration: null
   generated_at: '2026-08-14'
   generator: auto-generated
-  input_digest: f6167cceb21a43b7
+  input_digest: e951a77283edbafd

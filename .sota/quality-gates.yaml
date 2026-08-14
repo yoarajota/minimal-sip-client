@@ -18,8 +18,8 @@ utility_tree:
     priority: high
     difficulty: high
     verification: internal/sip/suite_test.go
-    status: unverified
-    evidence_refs: []
+    status: pass
+    evidence_refs: [E-004]
 
   - id: S-002
     characteristic: reliability
@@ -30,9 +30,9 @@ utility_tree:
       down, measured as zero dropped calls across the fault-injection run.
     priority: high
     difficulty: medium
-    verification: internal/sip/recovery_test.go
-    status: unverified
-    evidence_refs: []
+    verification: internal/sip/transaction_test.go
+    status: pass
+    evidence_refs: [E-003]
 
   - id: S-003
     characteristic: maintainability
@@ -80,10 +80,22 @@ iso5055:
   #   expires: "2026-12-31"
 
 # Every structural complexity traces to the scenario that requires it.
-complexity_ledger: []
-  # - item: "background compaction worker"
-  #   justifies: [S-001]
-  #   adr: D-003
+complexity_ledger:
+  - item: "internal/sip package (message/transaction/digest/sdp/rtp/dialog/client/trace)"
+    justifies: [S-001, S-003]
+    adr: D-001
+  - item: "trace recorder (TraceEntry rows feeding the message-trace matrix)"
+    justifies: [S-003]
+    adr: D-001
+  - item: "fake UAS test peer (internal/sip/fake_test.go)"
+    justifies: [S-002]
+    adr: D-002
+  - item: "docker compose integration stack (Asterisk container + client container)"
+    justifies: [S-001]
+    adr: D-002
+  - item: ".tools project-local quality toolchain (make tools)"
+    justifies: [S-001, S-002]
+    adr: D-003
 
 # Completed at P6. `suitable_for` is derived from the mapping table, never chosen.
 # diffusion:
