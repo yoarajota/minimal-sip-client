@@ -1,0 +1,96 @@
+# ISO/IEC 25010 utility tree + ISO/IEC 5055 gates + diffusion assessment.
+
+# At most 3. A concept that drives all nine drives none.
+driving_characteristics:
+  - functional-suitability
+  - reliability
+  - maintainability
+
+utility_tree:
+  - id: S-001
+    characteristic: functional-suitability
+    sub_attribute: functional-completeness
+    scenario: >
+      When the client runs the scenario suite (register, two-way RTP call, hold/resume,
+      teardown) against a pinned Asterisk instance, every step completes and is confirmed in
+      the PBX logs, measured as the number of scenario steps that pass out of the total
+      (target: all steps).
+    priority: high
+    difficulty: high
+    verification: internal/sip/suite_test.go
+    status: unverified
+    evidence_refs: []
+
+  - id: S-002
+    characteristic: reliability
+    sub_attribute: fault-tolerance
+    scenario: >
+      When a SIP message is dropped mid-transaction or a transaction timer expires, the client
+      recovers within RFC 3261's retransmission timers (T1, Timer E) and the call is not torn
+      down, measured as zero dropped calls across the fault-injection run.
+    priority: high
+    difficulty: medium
+    verification: internal/sip/recovery_test.go
+    status: unverified
+    evidence_refs: []
+
+  - id: S-003
+    characteristic: maintainability
+    sub_attribute: analyzability
+    scenario: >
+      When a reader audits the message-trace matrix, every implemented behaviour carries a
+      non-null mapping to the exact RFC 3261 section that forces it, measured as the fraction
+      of implemented behaviours with a complete trace (target: all).
+    priority: medium
+    difficulty: medium
+    verification: docs/04-tradeoffs.md
+    status: unverified
+    evidence_refs: []
+
+iso5055:
+  # One command that runs every check below and exits non-zero on violation.
+  runner: "make quality"
+  last_run:
+    date: "2026-08-14"
+    exit_code: 0
+    commit: ""
+  thresholds:
+    cyclomatic_complexity_max: 15
+    function_length_max: 60
+    file_length_max: 500
+    duplicated_lines_pct_max: 3
+    max_call_depth: 8
+  # Replace `tool` with the real check for this stack. Rows may not be dropped.
+  weaknesses:
+    - {cwe: 798,  name: "Hard-coded credentials",              tool: "gitleaks detect"}
+    - {cwe: 20,   name: "Improper input validation",           tool: "staticcheck ./..."}
+    - {cwe: 476,  name: "Null pointer dereference",            tool: "go vet ./..."}
+    - {cwe: 772,  name: "Missing release of resource",         tool: "staticcheck ./..."}
+    - {cwe: 391,  name: "Unchecked error condition",           tool: "errcheck ./..."}
+    - {cwe: 400,  name: "Uncontrolled resource consumption",   tool: "staticcheck ./..."}
+    - {cwe: 1121, name: "Excessive cyclomatic complexity",     tool: "gocyclo -over 15 ."}
+    - {cwe: 1041, name: "Unstructured duplicated code",        tool: "golangci-lint run"}
+    - {cwe: 561,  name: "Dead code",                           tool: "deadcode ./..."}
+    - {cwe: 1047, name: "Circular dependencies",               tool: "go vet ./..."}
+  exemptions: []
+  # - id: X-001
+  #   rule: cyclomatic_complexity_max
+  #   scope: internal/pkg/file.go:Function
+  #   reason: "At least 30 characters explaining why decomposition would make this worse."
+  #   expires: "2026-12-31"
+
+# Every structural complexity traces to the scenario that requires it.
+complexity_ledger: []
+  # - item: "background compaction worker"
+  #   justifies: [S-001]
+  #   adr: D-003
+
+# Completed at P6. `suitable_for` is derived from the mapping table, never chosen.
+# diffusion:
+#   relative_advantage: {score: partial, justification: "..."}
+#   compatibility:      {score: strong,  justification: "..."}
+#   simplicity:         {score: weak,    justification: "..."}
+#   trialability:       {score: strong,  justification: "..."}
+#   observability:      {score: partial, justification: "..."}
+#   suitable_for: early-adopters
+#   chasm_blockers: [simplicity]

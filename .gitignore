@@ -1,0 +1,25 @@
+# Build and dependency artefacts
+.venv/
+node_modules/
+target/
+dist/
+build/
+*.egg-info/
+
+# Tool caches
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.import_linter_cache/
+.gocache/
+
+# Local environment — never commit credentials
+.env
+.env.*
+!.env.example
+
+# Benchmark scratch output. Committed results belong in docs/05-evidence.md.
+bench/out/
+*.prof

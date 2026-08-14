@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Concept artifact</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<button id="toggle" class="toggle mono" aria-label="Toggle dark and light mode" title="Toggle dark/light">PAPER/INK</button>
+<main id="main" aria-busy="true"></main>
+<footer class="colophon mono" id="colophon"></footer>
+<noscript><p class="mono noscript">This page renders its content with JavaScript. The raw content is available in <a class="link" href="data.json">data.json</a>.</p></noscript>
+<script id="artifact-data" type="application/json">__ARTIFACT_DATA__</script>
+<script>
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = sel => document.querySelector(sel);
+
+function chip(verdict, small) {
+  const known = ["supported", "partially-supported", "falsified", "untested"];
+  const cls = known.includes(verdict) ? verdict : (verdict === "active" ? "active" : "state");
+  const label = verdict.replace(/-/g, " ");
+  return `<span class="chip ${esc(cls)}${small ? " chip-small" : ""}" aria-label="Status: ${label}">${esc(label)}</span>`;
+}
+
+function statusChip(status) {
+  return `<span class="chip chip-small status-${esc(status)}">${esc(status)}</span>`;
+}
+
+const DIFF_NAMES = { "relative_advantage": "clear advantage over what people use today",
+                     "compatibility": "fits existing setups",
+                     "simplicity": "easy to understand and adopt",
+                     "trialability": "easy to try out",
+                     "observability": "you can see it working" };
+
+function diffChip(attribute, score) {
+  return `<span class="chip chip-small diff-${esc(score)}">${esc(DIFF_NAMES[attribute] || attribute)} · ${esc(score)}</span>`;
+}
+
+function gauge(label, level, noteText) {
+  const pct = (level / 9) * 100;
+  return `<div class="gauge" role="img" aria-label="${esc(label)} ${level} of 9">
+    <div class="gauge-head">
+      <span class="gauge-name mono">${esc(label)}</span>
+      <span class="gauge-level">${level}<span class="gauge-max">/9</span></span>
+      <span class="gauge-note">${esc(noteText)}</span>
+    </div>
+    <div class="gauge-track"><div class="gauge-fill" style="width:${pct}%"></div></div>
+  </div>`;
+}
+
+function chart(d) {
+  const W = 720, H = 300, L = 52, R = 16, T = 16, B = 38;
+  const depths = d.series.flatMap(s => s.points.map(p => p[0])).concat((d.x_ticks || []).map(t => t[1]));
+  const positive = depths.filter(v => v > 0);
+  const x0 = Math.log10(Math.min(...positive)), x1 = Math.log10(Math.max(...positive));
+  const px = depth => {
+    const v = depth > 0 ? Math.log10(depth) : x0 - 0.45 * (x1 - x0);
+    return L + Math.max(0, Math.min(1, (v - x0) / (x1 - x0))) * (W - L - R);
+  };
+  if (!positive.length) { return ""; }
+  const py = v => T + Math.max(0, Math.min(1, 1 - v / d.ymax)) * (H - T - B);
+  const gridX = d.x_ticks.map(([label, depth]) =>
+    `<line class="chart-grid" x1="${px(depth)}" y1="${T}" x2="${px(depth)}" y2="${H - B}"/>`).join("");
+  const gridY = d.y_ticks.map(v =>
+    `<line class="chart-grid" x1="${L}" y1="${py(v)}" x2="${W - R}" y2="${py(v)}"/>`).join("");
+  const labelsX = d.x_ticks.map(([label, depth]) =>
+    `<text class="chart-axis" x="${px(depth)}" y="${H - B + 18}" text-anchor="middle">${esc(label)}</text>`).join("");
+  const labelsY = d.y_ticks.map(v =>
+    `<text class="chart-axis" x="${L - 8}" y="${py(v) + 4}" text-anchor="end">${v}</text>`).join("");
+  const paths = d.series.map(s => {
+    const pts = s.points.map(p => `${px(p[0])},${py(p[1])}`).join(" ");
+    const cls = s.kind === "concept" ? "chart-concept" : "chart-baseline";
+    const dots = s.kind === "concept" ? s.points.map(p =>
+      `<circle class="chart-concept-dot" cx="${px(p[0])}" cy="${py(p[1])}" r="3.2"/>`).join("") : "";
+    return `<polyline class="${cls}" points="${pts}" fill="none"/>${dots}`;
+  }).join("");
+  const co = d.crossover
+    ? `<line class="chart-crossover" x1="${px(d.crossover.depth)}" y1="${T}" x2="${px(d.crossover.depth)}" y2="${H - B}"/>
+    <text class="chart-crossover-label" x="${px(d.crossover.depth)}" y="${T + 12}" text-anchor="middle">${esc(d.crossover.label)}</text>`
+    : "";
+  const legend = d.series.map(s =>
+    `<span class="legend-item"><span class="legend-swatch ${s.kind === "concept" ? "legend-concept" : "legend-baseline"}"></span>${esc(s.name)}</span>`).join("");
+  return `<div class="chart">
+    <svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(d.title)}">
+      ${gridX}${gridY}${labelsX}${labelsY}${co}${paths}
+    </svg>
+    <div class="chart-legend mono">${legend}</div>
+    <p class="chart-caption mono">${esc(d.caption)}</p>
+  </div>`;
+}
+
+const LEGEND = [
+  ["verdict chip", "the bottom line of this project — green means the claim held, red means it was disproved, amber means partly, dashed means not decided"],
+  ["paused / archived chip", "the work was deliberately stopped at this point — the verdicts below are the last state it reached"],
+  ["in progress chip", "this project is still running — the verdicts below are not final"],
+  ["scenario chips (pass / fail / unverified)", "a concrete situation the concept was required to handle, and whether it was demonstrated, failed, or never measured"],
+  ["diffusion chips (strong / partial / weak)", "how ready each adoption-relevant trait is today, in the author's assessment"],
+  ["weakest link", "the least proven part of the system as a whole — what most limits using it for real"],
+  ["E-001 … E-999", "a measured result, linked to the evidence document — every claim on this page points at one"],
+  ["H-001 … H-999", "a hypothesis: the specific prediction this project set out to test, stated before measuring"],
+  ["S-001 … S-999", "a scenario: one concrete situation the concept was required to handle, with a pass or fail verdict"],
+  ["baseline", "the boring, standard solution the concept competes against — every 'faster' on this page is faster than this, measured in the same environment"],
+  ["TRL", "technology readiness, 1–9: how proven the idea is, from 'paper idea' (1) to 'running in production' (9)"],
+  ["SRL", "system readiness, 1–9: how well the parts work together, not just individually"],
+  ["IRL", "integration readiness, 1–9: how proven the seam between two parts is"],
+  ["suitable for", "who can realistically adopt this today: innovators and early adopters can absorb rough edges; the majority should wait until the weak points below are fixed"],
+  ["dead ends", "approaches that were tried and abandoned — published so the next person does not walk the same alley"],
+];
+
+function legendTable() {
+  return `<table class="legend">
+    <caption class="legend-caption">How to read this page — the jargon, once</caption>
+    <tbody>
+      ${LEGEND.map(([term, what]) => `<tr><th class="mono">${esc(term)}</th><td>${esc(what)}</td></tr>`).join("")}
+    </tbody>
+  </table>`;
+}
+
+function section(title, body) {
+  return `<section class="sect"><h2 class="sect-title">${esc(title)}</h2>${body}</section>`;
+}
+
+function evTable(rows, evidenceHref) {
+  return `<table class="tbl mono"><thead><tr><th>Evidence</th><th>What it measured</th></tr></thead><tbody>
+    ${rows.map(e => `<tr><td><a class="link mono" href="${esc(evidenceHref)}">${esc(e.id)}</a></td><td>${esc(e.title)}</td></tr>`).join("")}
+  </tbody></table>`;
+}
+
+function digDeeper(links) {
+  const rows = [
+    ["The theory", links.theory, "What the literature establishes, and where the idea came from"],
+    ["The evidence", links.evidence, "Every claim on this page, with the command and environment that produced it"],
+    ["The tradeoffs", links.tradeoffs, "What was analysed against what, and the risks that remain open"],
+  ];
+  if (links.adrs && links.adrs.length) {
+    rows.push(["The decisions", links.adrs[0], "Why the design looks the way it does — and the options that were rejected"]);
+  }
+  return `<ul class="dig">
+    ${rows.map(([name, href, what]) => `<li class="dig-item"><a class="dig-link" href="${esc(href)}">${esc(name)} →</a><span class="dig-what">${esc(what)}</span></li>`).join("")}
+  </ul>`;
+}
+
+function render() {
+  const raw = document.getElementById("artifact-data").textContent.trim();
+  if (!raw || raw === "__ARTIFACT_DATA__") {
+    $("#main").innerHTML = '<p class="mono noscript">No embedded content — regenerate the artifact page.</p>';
+    return;
+  }
+  let d;
+  try {
+    d = JSON.parse(raw);
+  } catch (e) {
+    $("#main").innerHTML = '<p class="mono noscript">The embedded content is damaged — regenerate the artifact page.</p>';
+    return;
+  }
+  document.title = d.meta.title;
+
+  $("#main").innerHTML = `
+  <section class="hero">
+    <p class="kicker mono">${esc(d.meta.domain.map(x => x.toUpperCase()).join(" — "))}</p>
+    <h1 class="hero-title">${esc(d.meta.title)}</h1>
+    <p class="hero-question">${esc(d.meta.question)}</p>
+    <div class="hero-answer">
+      ${chip(d.meta.status)}
+      <p class="hero-answer-text">${esc(d.pitch.one_line_answer)}</p>
+    </div>
+  </section>
+
+  <p class="opening dropcap">${esc(d.pitch.elevator)}</p>
+
+  ${section("How to read this page", legendTable())}
+
+  ${section("The numbers", `
+    <ul class="claims">
+      ${d.headline.map((h, i) => `<li class="claim">
+        <span class="claim-num mono">${String(i + 1).padStart(2, "0")}</span>
+        <p class="claim-text">${esc(h.text)}</p>
+        <span class="claim-ref mono">${esc(h.evidence)}</span>
+      </li>`).join("")}
+    </ul>
+    ${d.chart ? chart(d.chart) : ""}
+    ${d.reproduce && d.reproduce.length ? `<div class="reproduce">
+      <p class="reproduce-label mono">REPRODUCE IT YOURSELF</p>
+      <pre class="reproduce-code mono">${esc(d.reproduce.map(c => "$ " + c).join("\n"))}</pre>
+    </div>` : ""}`)}
+
+  ${section("What we claimed — and what happened", `
+    ${d.verdict.hypotheses.map(h => `<article class="hyp-block">
+      <blockquote class="hyp"><p class="hyp-statement"><span class="hyp-id mono">${esc(h.id)}</span> ${esc(h.statement)}</p></blockquote>
+      <div class="verdict-line">
+        ${chip(h.verdict)}
+        <p class="verdict-refs mono">decided by ${esc((h.evidence_refs || []).join(" · "))}</p>
+      </div>
+    </article>`).join("")}`)}
+
+  ${section("How ready is this?", `
+    ${gauge("TRL", d.readiness.trl, d.readiness.trl_label)}
+    ${gauge("SRL", d.readiness.srl, d.readiness.srl_label)}
+    ${d.readiness.weakest ? `<p class="weakest mono">WEAKEST LINK — ${esc(d.readiness.weakest)}</p>` : ""}
+    <table class="tbl mono"><thead><tr><th>Scenario</th><th>What it demands</th><th>Result</th></tr></thead><tbody>
+      ${d.readiness.scenarios.map(s => `<tr><td>${esc(s.id)}</td><td>${esc(s.characteristic)}</td><td>${statusChip(s.status)}</td></tr>`).join("")}
+    </tbody></table>
+    <div class="diffusion">
+      <p class="diff-head mono">WHO CAN ADOPT THIS TODAY — ${esc(d.readiness.diffusion.suitable_for)}</p>
+      <p class="diff-chips">${d.readiness.diffusion.scores.map(s => diffChip(s.attribute, s.score)).join(" ")}</p>
+      ${d.readiness.diffusion.chasm_blockers && d.readiness.diffusion.chasm_blockers.length ? `<p class="chasm">What would have to change before most teams should adopt it: <strong>${esc(d.readiness.diffusion.chasm_blockers.map(b => DIFF_NAMES[b] || b).join(", "))}</strong></p>` : ""}
+    </div>`)}
+
+  ${section("The story", `
+    <div class="journey">
+      ${d.story.journey.map(j => `<article class="journey-step">
+        <h3 class="journey-phase mono">${esc(j.phase)}</h3>
+        <h4 class="journey-title">${esc(j.title)}</h4>
+        <p class="journey-summary">${esc(j.summary)}</p>
+      </article>`).join("")}
+    </div>
+    ${d.story.dead_ends && d.story.dead_ends.length ? `<div class="deadends">
+      <h3 class="deadends-label mono">WHAT WE TRIED THAT DIDN'T WORK</h3>
+      ${d.story.dead_ends.map(x => `<article class="deadend"><h4 class="deadend-title">${esc(x.title)}</h4><p class="deadend-text">${esc(x.text)}</p></article>`).join("")}
+    </div>` : ""}`)}
+
+  ${section("What we learned", `
+    <ol class="lessons">
+      ${d.lessons.map(l => `<li class="lesson"><span class="lesson-num mono"></span>${esc(l)}</li>`).join("")}
+    </ol>`)}
+
+  ${section("Where this falls short", `
+    <div class="lim">
+      <div class="lim-block"><h3 class="lim-label mono">WHERE THE BASELINE WINS</h3><p>${esc(d.limitations.baseline_wins)}</p></div>
+      <div class="lim-block"><h3 class="lim-label mono">WHAT IS UNTESTED</h3><p>${esc(d.limitations.untested)}</p></div>
+      <div class="lim-block"><h3 class="lim-label mono">WHAT WOULD MOVE IT FORWARD</h3><p>${esc(d.limitations.next_level)}</p></div>
+      <div class="lim-block"><h3 class="lim-label mono">BUILT-IN COSTS</h3><p>${esc(d.limitations.structural)}</p></div>
+    </div>`)}
+
+  ${section("Should you use it?", `
+    <p><strong>${esc(d.audience.who_is_this_for)}</strong></p>
+    <p><strong>Not for:</strong> ${esc(d.audience.not_for)}</p>`)}
+
+  ${section("The evidence", evTable(d.evidence, d.repo.links.evidence))}
+
+  ${section("Dig deeper", digDeeper(d.repo.links))}`;
+
+  $("#colophon").innerHTML = `<a class="link" href="${esc(d.meta.repo_url)}">${esc(d.meta.repo_url)}</a>`;
+  $("#main").setAttribute("aria-busy", "false");
+}
+
+render();
+
+const body = document.body;
+const key = "artifact-ink";
+try { if (localStorage.getItem(key) === "1") body.classList.add("ink"); } catch (e) {}
+$("#toggle").setAttribute("aria-pressed", body.classList.contains("ink") ? "true" : "false");
+$("#toggle").addEventListener("click", () => {
+  body.classList.toggle("ink");
+  $("#toggle").setAttribute("aria-pressed", body.classList.contains("ink") ? "true" : "false");
+  try { localStorage.setItem(key, body.classList.contains("ink") ? "1" : "0"); } catch (e) {}
+});
+</script>
+</body>
+</html>

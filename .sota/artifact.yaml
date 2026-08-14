@@ -1,0 +1,65 @@
+# Curated narrative for the concept artifact (docs/artifact/data.json).
+# Written once, at P6, after the hypothesis is decided and the evidence is final.
+# The writing guide is the artifact skill (rubric grounded in research/explanation-artifact-research.md).
+#
+# Rules:
+# - The artifact is the concept's own document: it never names the assessment framework
+#   or its tooling (docs/artifact/DESIGN.md, binding rule 1).
+# - Every field below is required. The `TODO` placeholders fail generation — the
+#   artifact generator refuses to write data.json until this file says something real.
+# - Evidence references must resolve to docs/05-evidence.md entries (E-###).
+
+pitch:
+  one_line_answer: "TODO"
+  elevator: "TODO"
+
+# The strongest measured results, as {text, evidence} pairs. Each text names the number
+# and the comparison; each evidence is the E-### that produced it. The verdict itself is
+# NOT here — it is derived from the hypothesis data.
+headline: []
+
+# The commands a reader runs to reproduce the headline result, in order.
+reproduce: []
+
+# The phase-by-phase story, in order. `phase` is a plain story label (e.g. "Theory",
+# "Proof of concept", "Evidence") — never a process label like "P1 —". Three to six
+# steps; each summary tells what changed in the reader's terms.
+journey: []
+
+# Optional: dead ends that were never recorded in docs/03-log.md (e.g. they were recorded
+# as ADR rejected options instead). When present, these replace the log-derived list.
+# Each entry: {title, text}. Omit the whole block to use the log-derived list.
+#
+# dead_ends:
+#   - title: ""
+#     text: ""
+
+# What a future reader should take away. One thought per entry, no numbering needed.
+lessons: []
+
+limitations:
+  baseline_wins: "TODO"
+  untested: "TODO"
+  next_level: "TODO"
+  structural: "TODO"
+
+audience:
+  who_is_this_for: "TODO"
+  not_for: "TODO"
+
+# Optional: the headline chart. x_ticks are [label, depth] pairs placed on a logarithmic
+# x-axis; y_ticks are the numeric gridlines; ymax bounds the y-axis; crossover marks the
+# measured switch point; series has one `baseline` (dashed, neutral) and one `concept`
+# (accent). Omit the whole block if the concept has no headline curve.
+#
+# chart:
+#   title: "p95 page latency vs offset depth"
+#   evidence: "E-004"
+#   caption: "5,000,000 rows · PostgreSQL 16.4 · 10-depth sweep, p95 of 20 samples each"
+#   x_ticks: [["100", 100], ["1K", 1000], ["10K", 10000], ["100K", 100000]]
+#   y_ticks: [0, 50, 100, 150, 200]
+#   ymax: 200
+#   crossover: { depth: 100, label: "crossover ≈ 100" }
+#   series:
+#     - { name: "OFFSET/LIMIT (baseline)", kind: baseline, points: [[100, 0.5], [1000, 0.5], [10000, 1.4]] }
+#     - { name: "keyset", kind: concept, points: [[100, 0.41], [1000, 0.34], [10000, 0.51]] }
