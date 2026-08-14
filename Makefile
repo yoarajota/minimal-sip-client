@@ -7,6 +7,7 @@ quality:
 	  || { echo "gofmt needed on the files listed above"; exit 1; }
 	go vet ./...
 	go build -o /dev/null .
+	cd poc && go vet ./... && go build -o /dev/null .
 
 test:
 	go test ./... -count=1

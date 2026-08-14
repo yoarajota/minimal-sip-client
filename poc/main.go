@@ -102,9 +102,9 @@ func md5hex(s string) string {
 // ---------------------------------------------------------------------------
 
 type ua struct {
-	server    string // host:port of the PBX
-	domain    string // host of the PBX, without port (the AOR domain)
-	user      string
+	server string // host:port of the PBX
+	domain string // host of the PBX, without port (the AOR domain)
+	user   string
 	pass   string
 	ext    string // extension to call
 

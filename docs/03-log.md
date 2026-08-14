@@ -44,16 +44,17 @@ that stops this file becoming a pile — and unlike most promotion rules, it is 
 
 ---
 
-<!-- No entries yet. Open entries are reported as in-flight work, so this file
-     deliberately starts empty — a placeholder entry here would report fake state on day one.
+### L-001 — 2026-08-14 — P3 component phase in flight
 
-     Copy this shape for the first real entry:
+**Context:** G2 passed (poc/ completes the suite against Asterisk 20, E-002, exit 0).
+Advanced to P3; the public surface is decided (D-001) and the message-trace matrix instrument
+is scaffolded (docs/matrix.md). The component rewrite itself is not started.
 
-### L-001 — 2026-08-14 — short title
+**Found:** the P2 PoC run surfaced two load-bearing behaviours the P1 theory did not predict:
+(1) Asterisk challenges the **initial INVITE** with 401 (endpoint has `auth` configured), so
+digest handling is required on INVITE, not only REGISTER — matrix row 4; (2) in-dialog
+requests must send the Request-URI as the bare Contact URI and the To tag outside the angle
+brackets — two PoC bugs (bareURI extraction, tag placement) that cost two debugging rounds
+and are fixed in poc/.
 
-**Context:** what you were doing when this came up.
-**Found:** what actually happened, specifically enough that nobody repeats it. Include the
-version, flag, or condition that mattered.
-**Disposition:** open | dead-end | promoted: D-### | promoted: E-### | promoted: README
-
--->
+**Disposition:** open
