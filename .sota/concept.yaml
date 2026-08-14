@@ -71,6 +71,6 @@ hypotheses:
 
 # Set once the remote exists (bootstrap step 3). Required only at G6, so it stays
 # null until then rather than blocking every earlier gate as a placeholder.
-repo_url:
+repo_url: https://github.com/yoarajota/minimal-sip-client
 created: "2026-08-14"
 updated: "2026-08-14"
