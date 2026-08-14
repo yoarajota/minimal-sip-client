@@ -1,0 +1,21 @@
+services:
+  asterisk:
+    image: andrius/asterisk:20.7-cert11_debian-trixie
+    volumes:
+      - ./asterisk/pjsip.conf:/etc/asterisk/pjsip.conf:ro
+      - ./asterisk/extensions.conf:/etc/asterisk/extensions.conf:ro
+      - ./asterisk/rtp.conf:/etc/asterisk/rtp.conf:ro
+
+  client:
+    image: golang:1.22-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: ["go", "run", "."]
+    environment:
+      SIP_SERVER: "asterisk:5060"
+      SIP_USER: alice
+      SIP_PASS: secret
+      SIP_EXT: "100"
+    depends_on:
+      - asterisk

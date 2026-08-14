@@ -49,6 +49,53 @@ layout (RFC 3550 §5.1).
 
 ---
 
+### E-002 — P2 proof of concept: minimal client completes the suite against a real PBX
+
+**Claim.** A from-scratch RFC 3261 client (`poc/`, ~500 lines of Go, no SIP library)
+completes the scenario suite against a real Asterisk 20 PBX in containers: REGISTER with
+HTTP-digest auth, two-way RTP call, hold/resume via re-INVITE, teardown. This is the
+critical function from the P1 theory — a minimal subset of RFC 3261 is sufficient to
+work against a mainstream PBX. Supports H-001 and scenario S-001.
+
+**Prediction (from P1, RFC 3665 §2.1/§3.1):** the flow would need the six mandatory headers
+(To, From, CSeq, Call-ID, Max-Forwards, Via) plus Contact for INVITE (§8.1.1), the
+REGISTER 401→Authorization→200 exchange (§10, §22.4), INVITE→180→200→ACK, media, and
+BYE→200, with the hold offer answered `recvonly` (RFC 3264 §5.1). Observed: exactly that
+flow, with one addition — Asterisk challenges the **initial INVITE** with 401 (endpoint
+has `auth` configured), so digest handling on INVITE is load-bearing too.
+
+**Environment:** Docker Desktop daemon 29.6.1 (WSL2 backend), docker compose v5.3.0.
+Images: `andrius/asterisk:20.7-cert11_debian-trixie` (Asterisk certified 20.7-cert11) and
+`golang:1.22-alpine`; client compiled with Go 1.22.2. Client and PBX on one compose
+network; Asterisk configs in `poc/asterisk/` (pjsip.conf endpoint `alice`, digest
+`userpass`; extensions.conf `100` → Answer+Echo; rtp.conf ports 10000–10050).
+
+```bash
+./poc/run.sh     # from the repository root; exit 0 = suite passed
+```
+
+**Result:** exit 0, `SUITE PASSED: register -> call -> hold -> resume -> teardown against a
+real PBX`. Observed message flow:
+
+```
+REGISTER -> 401 challenge -> REGISTER+Authorization -> 200 OK
+INVITE -> (401 -> INVITE+Authorization) -> 180 -> 200 OK (SDP answer) -> ACK
+re-INVITE(sendonly) -> 200 OK (answer recvonly) -> ACK
+re-INVITE(sendrecv) -> 200 OK (answer sendrecv) -> ACK
+BYE -> 200 OK
+```
+
+RTP (PCMU, 440 Hz tone, 20 ms packets): active phase sent 152 / received 152 (echo
+symmetry through Asterisk `Echo()`); during hold received 0 (client sends nothing); after
+resume sent 102 / received 102. The hold offer's answer was `recvonly` and the resume
+offer's answer `sendrecv`, as RFC 3264 §5.1 requires.
+
+**Status:** reproducing
+**Supports:** H-001, S-001, TRL 3 for `core`
+**Recorded:** 2026-08-14
+
+---
+
 <!-- Template for further entries:
 
 ### E-002 — title

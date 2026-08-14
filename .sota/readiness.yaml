@@ -1,25 +1,28 @@
 components:
 - id: core
   role: concept
-  trl: 1
+  trl: 3
   evidence_refs:
   - E-001
+  - E-002
   notes: 'The from-scratch SIP client: a minimal RFC 3261 implementation (register, call establishment,
     hold/resume, teardown) carrying RTP media, plus the message-trace matrix that maps each implemented
-    behaviour to the RFC section forcing it. TRL 1: the concept is defined and the P0 screen is written;
-    nothing is implemented yet, so the claim rests on the screen rather than on run evidence.
+    behaviour to the RFC section forcing it. TRL 3: the P2 proof of concept in poc/ completes the scenario
+    suite against a real Asterisk 20 PBX (E-002): REGISTER with digest auth, two-way RTP call, hold/resume
+    via re-INVITE, teardown, one command, exit 0. The P1 prediction of the required flow shape matched
+    (E-001, E-002); the measured message-trace matrix and the load-bearing-subset count land at P3.
 
     '
 integrations: []
 not_applicable: []
 computed:
-  composite_srl: 0.1111
-  translated_srl: 2
+  composite_srl: 0.3333
+  translated_srl: 4
   strict_srl: null
   component_srl:
-    core: 0.1111
-  weakest_component: core (0.1111)
+    core: 0.3333
+  weakest_component: core (0.3333)
   weakest_integration: null
   generated_at: '2026-08-14'
   generator: auto-generated
-  input_digest: 7161b490dad9b6fe
+  input_digest: f6167cceb21a43b7
