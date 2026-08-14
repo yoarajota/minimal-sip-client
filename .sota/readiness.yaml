@@ -37,18 +37,47 @@ components:
     the repository root. Containerised so the whole suite is reproducible from a clean machine.
 
     '
-integrations: []
+integrations:
+- from: core
+  to: asterisk
+  irl: 5
+  rationale: 'RFC 3261 over UDP 5060 plus RTP (PCMU) — protocol and contract named (D-001, README public
+    interface, matrix) and exercised end-to-end against the real pinned PBX (E-004): register, call, hold/resume,
+    teardown. Error semantics defined and unit-tested (timeouts 64xT1 -> 408, Timer E retransmission,
+    CSeq idempotency, 401 digest retry on REGISTER and INVITE — E-003). Lifecycle handled in code (connect
+    via probe+register, dialog manage via re-INVITE, terminate via BYE + Close, resource release on stream/conn
+    close) and exercised in the suite. Blocked from IRL 6: single codec, single concurrent call — end-to-end
+    flow under realistic volumes and edge encodings is unexercised, and there is no fault injection against
+    the real PBX (unit-tier faults run against the fake UAS only).
+
+    '
+  evidence_refs:
+  - E-003
+  - E-004
+- from: core
+  to: client-runtime
+  irl: 4
+  rationale: 'The host seam: the compiled client runs inside the golang:1.22-alpine container and the
+    suite exits with the client''s exit code (compose --exit-code-from client, propagated by run-suite.sh).
+    Contract documented (README Try it, Makefile suite target); error semantics defined (exit 0 = suite
+    passed, non-zero otherwise). Blocked from IRL 5: the container''s shutdown path (SIGTERM handling,
+    drain of an in-flight call before exit) is untested — compose stops the container after the suite
+    finishes, so graceful termination at the host seam is not proven.
+
+    '
+  evidence_refs:
+  - E-004
 not_applicable: []
 computed:
-  composite_srl: 0.7037
-  translated_srl: 7
-  strict_srl: null
+  composite_srl: 0.5027
+  translated_srl: 4
+  strict_srl: 0.3189
   component_srl:
-    core: 0.5556
-    asterisk: 1.0
-    client-runtime: 0.5556
-  weakest_component: core (0.5556)
-  weakest_integration: null
+    core: 0.4527
+    asterisk: 0.6543
+    client-runtime: 0.4012
+  weakest_component: client-runtime (0.4012)
+  weakest_integration: core<->client-runtime (IRL 4)
   generated_at: '2026-08-14'
   generator: auto-generated
-  input_digest: e951a77283edbafd
+  input_digest: e440ef3d8b85d2f3

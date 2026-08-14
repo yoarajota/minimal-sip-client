@@ -96,11 +96,18 @@ Full ledger: [docs/05-evidence.md](docs/05-evidence.md).
 - **The baseline (PJSIP 2.17) is not yet measured here** — the suite runs the concept client
   only; the comparative "subset size vs. full stack" measurement lands at P5. Until then the
   claim rests on the matrix (docs/matrix.md), not on a PJSIP run.
+- **The client is a measurement instrument first.** A competent engineer solving the *call*
+  problem with PJSIP loses nothing for using SIP (that is the substitution check, A5). What
+  the incumbent cannot do — and this repo exists for — is say which parts of RFC 3261 are
+  load-bearing. Judge the repository on the matrix and evidence, not on the client.
+- **Interop is proven against exactly one PBX.** The message/dialog/auth surface has only run
+  against the pinned Asterisk 20.7 container; "mainstream PBX" in the claim is that
+  configuration. Widening it needs a second PBX (R-004).
 - **Media is one client against Asterisk's `Echo()` application.** The RTP path is real and
   two-way (send and receive through the PBX), but there is no second real endpoint; two
   phones calling each other is untested.
 - **Only UDP transport and PCMU.** No TCP/TLS, no other codecs, no NAT traversal; a PBX that
-  requires TLS or a codec outside PCMU will not complete the suite.
+  requires TLS or a codec outside PCMU will not complete the suite (R-001, R-002).
 - **What would move it up a readiness level:** P5's benchmark must count the matrix's forced
   MUST statements against the 590 denominator and run the comparison against PJSIP 2.17 under
   declared conditions.

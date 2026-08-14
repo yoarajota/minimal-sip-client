@@ -2,7 +2,7 @@ id: C-004
 slug: minimal-sip-client
 title: "Minimal SIP client: what RFC 3261 subset is sufficient to register and hold a call with a real PBX?"
 archetype: implementation
-phase: P3
+phase: P4
 status: active
 
 # The stack is declared explicitly so gate commands and verification paths are concrete

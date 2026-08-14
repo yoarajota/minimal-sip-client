@@ -59,3 +59,22 @@ and are fixed in poc/. Resolved by the P3 work: D-001 (surface), D-002 (test str
 D-003 (toolchain), E-003 and E-004 (evidence).
 
 **Disposition:** promoted: D-001
+
+---
+
+### L-002 — 2026-08-14 — P4 integration and tradeoffs complete
+
+**Context:** G3 passed (internal/sip component, E-003/E-004, ISO 5055 gate, TRL 5).
+Advanced to P4. The system is declared (core, asterisk, client-runtime); the two seams are
+scored core↔asterisk IRL 5, core↔client-runtime IRL 4 in .sota/readiness.yaml.
+
+**Found:** the ATAM-lite adversarial pass (docs/04-tradeoffs.md) surfaced three findings the
+happy-path evidence could not: (1) a dead far end leaves an established dialog hanging —
+there is no liveness signal and Hangup's BYE times out at 32 s (R-003); (2) interop is proven
+against exactly one PBX, so the claim's "mainstream PBX" wording is only honest for the pinned
+configuration (R-004); (3) the substitution check (A5) confirms the client is a measurement
+instrument — PJSIP loses nothing for using SIP, and the repository's value is the matrix, not
+the client. Also recorded: three non-risks (fake-UAS fidelity, containerised-Asterisk
+fidelity, single-flight branch filtering) whose assumptions must be visible at P5.
+
+**Disposition:** promoted: E-005
