@@ -5,11 +5,11 @@
 **Concept** `C-004` · **archetype** `implementation`.
 
 A from-scratch SIP client (Go, no SIP library) that implements only the RFC 3261 subset
-needed to register, establish, hold, resume and tear down a two-way RTP call against a
-mainstream PBX — and measures how much of the specification that subset actually is. The
-measurement instrument is the message-trace matrix (`docs/matrix.md`): every implemented
-behaviour traced to the RFC section that forces it, counted against the 590 normative `MUST`
-occurrences in RFC 3261 (E-001).
+needed to register, establish, hold, resume and tear down a two-way RTP call against a real
+PBX (the pinned Asterisk 20 configuration, per R-004) — and measures how much of the
+specification that subset actually is. The measurement instrument is the message-trace matrix
+(`docs/matrix.md`): every implemented behaviour traced to the RFC section that forces it,
+counted against the 590 normative `MUST` occurrences in RFC 3261 (E-001).
 
 ## Claim
 
@@ -60,7 +60,34 @@ The client is synchronous and per-dialog: one registration, one call. It impleme
 behaviour — the far end is the PBX.
 
 <!-- scorecard:start -->
-<!-- Auto-generated. Do not hand-edit. -->
+
+### Readiness scorecard
+
+_Auto-generated. Do not hand-edit._
+
+| Measure | Value | Meaning |
+| :--- | :--- | :--- |
+| **TRL** | **6** | System prototype demonstrated |
+| **SRL**  | **5** | High-risk component technology development defined — seams only |
+| Composite SRL | 0.534 | standard formulation (all components, diagonal-inclusive) |
+| Weakest component | client-runtime (0.4259) | lowest component-level SRL |
+| Weakest seam | core<->client-runtime (IRL 4) | lowest-scoring integration pair |
+| Phase | P6 | |
+| Hypothesis | supported | |
+| Suitable for | early-adopters | |
+
+| Component | Role | TRL | Component SRL |
+| :--- | :--- | :-: | :-: |
+| `core` | concept | 6 | 0.490 |
+| `asterisk` | supporting | 9 | 0.685 |
+| `client-runtime` | host | 5 | 0.426 |
+
+| Scenario | Characteristic | Priority | Status |
+| :--- | :--- | :--- | :--- |
+| S-001 | functional-suitability | high | pass |
+| S-002 | reliability | high | pass |
+| S-003 | maintainability | medium | pass |
+
 <!-- scorecard:end -->
 
 ## Try it
@@ -104,32 +131,45 @@ Full ledger: [docs/05-evidence.md](docs/05-evidence.md).
 
 ## Limitations
 
-- **The comparative measurement is now made (E-007/E-008), and its boundary is the suite**
-  itself: the 16.7% subset number holds for *this* scenario suite and *this* pinned
-  configuration. A suite that added forking, presence, or TCP would force more MUSTs — the
-  matrix (docs/matrix.md) is the instrument for re-measuring. The PJSIP 2.17 baseline side is
-  a functional completion proof (E-008), not a code-size comparison.
-- **The incumbent's Python API cannot restart a held call's media headless.** pjsua2 (PJSIP
-  2.17) completes the suite's protocol steps — register, call, media, hold (sendonly 200),
-  resume re-INVITE (200), hangup — but its media stream stays inactive after the resume 200
-  with no sound device in the container (E-008, reproducible 5/5). The concept client resumes
-  media fully (102/102). Recorded as a finding; it favours the concept, so it is stated
-  rather than tuned away.
+### Where the baseline wins
+
+- **Breadth.** PJSIP is a production SIP stack with forking, presence/SUBSCRIBE, PRACK,
+  session timers, TCP/TLS, every codec, and twenty years of field hardening. The concept
+  client is 1,100 lines that completes one suite. Anyone building a general-purpose
+  communications product should use PJSIP; the only claim this repository makes is about the
+  size of the load-bearing subset (E-008's cost table).
 - **The client is a measurement instrument first.** A competent engineer solving the *call*
   problem with PJSIP loses nothing for using SIP (that is the substitution check, A5). What
   the incumbent cannot do — and this repo exists for — is say which parts of RFC 3261 are
   load-bearing. Judge the repository on the matrix and evidence, not on the client.
+
+### What is untested
+
 - **Interop is proven against exactly one PBX.** The message/dialog/auth surface has only run
-  against the pinned Asterisk 20.7 container; "mainstream PBX" in the claim is that
+  against the pinned Asterisk 20.7 container; the claim's "mainstream PBX" is that
   configuration. Widening it needs a second PBX (R-004).
 - **Media is one client against Asterisk's `Echo()` application.** The RTP path is real and
   two-way (send and receive through the PBX), but there is no second real endpoint; two
   phones calling each other is untested.
 - **Only UDP transport and PCMU.** No TCP/TLS, no other codecs, no NAT traversal; a PBX that
   requires TLS or a codec outside PCMU will not complete the suite (R-001, R-002).
-- **What would move it up a readiness level:** P5's benchmark must count the matrix's forced
-  MUST statements against the 590 denominator and run the comparison against PJSIP 2.17 under
-  declared conditions.
+- **The incumbent's Python API cannot restart a held call's media headless** — pjsua2's
+  stream stays inactive after the resume 200 (E-008, 5/5 runs). The concept client resumes
+  media fully (102/102). The re-INVITEs themselves succeed in the baseline; only media
+  restart fails, in the headless container.
+
+### What would move it up a level
+
+- **TRL 7** needs a production-like operational environment: a second real endpoint, a load
+  generator, sustained multi-call traffic, and monitoring — none of which this suite has
+  (readiness.yaml boundary note, E-006).
+- **IRL 6** for core↔asterisk needs a second codec, concurrent calls, and fault injection at
+  the real seam; **IRL 5** for core↔client-runtime needs the SIGTERM/drain path tested.
+- **The comparative measurement's boundary is the suite itself.** The 16.7% subset number
+  holds for *this* scenario suite and *this* pinned configuration. A suite that added
+  forking, presence, or TCP would force more MUSTs — the matrix (docs/matrix.md) is the
+  instrument for re-measuring. The baseline side is a functional completion proof (E-008),
+  not a code-size comparison.
 
 ### What we tried that didn't work
 
@@ -153,4 +193,5 @@ Full ledger: [docs/05-evidence.md](docs/05-evidence.md).
 
 ## License
 
-TODO — not yet chosen.
+MIT — chosen deliberately: this repository exists to be benchmark material, and permissive
+licensing keeps it usable as such (workflow 07 step 5).

@@ -98,11 +98,36 @@ complexity_ledger:
     adr: D-003
 
 # Completed at P6. `suitable_for` is derived from the mapping table, never chosen.
-# diffusion:
-#   relative_advantage: {score: partial, justification: "..."}
-#   compatibility:      {score: strong,  justification: "..."}
-#   simplicity:         {score: weak,    justification: "..."}
-#   trialability:       {score: strong,  justification: "..."}
-#   observability:      {score: partial, justification: "..."}
-#   suitable_for: early-adopters
-#   chasm_blockers: [simplicity]
+diffusion:
+  relative_advantage:
+    score: partial
+    justification: >
+      The measured claim (H-001, supported): the client forces 90 of 540 normative RFC 3261
+      MUST statements (16.7%) to complete the suite the incumbent's full stack needs, and it
+      resumes held-call media headless where pjsua2 cannot (E-007, E-008). Real but situational:
+      the advantage is for scenario/embedded use, not the breadth the incumbent serves.
+  compatibility:
+    score: partial
+    justification: >
+      Speaks standard RFC 3261 SIP (digest auth over UDP) to a real PBX — IRL 5 against
+      pinned Asterisk, exit-code contract at IRL 4 (E-004, readiness.yaml). Capped at partial:
+      its own Go API is not a pjsua drop-in, and single-codec/UDP-only limits where it fits.
+  simplicity:
+    score: strong
+    justification: >
+      The SIP machinery (transactions, timers, digest, SDP) is entirely hidden behind a
+      five-value Config and four methods; the suite runs with two docker compose commands
+      (README "Try it"). Complexity hidden counts (instrument definition).
+  trialability:
+    score: strong
+    justification: >
+      One command (./bench/run.sh) reproduces the headline result — concept 5x, baseline 5x,
+      fault injection — in containers, no host changes, ~8 min (E-006).
+  observability:
+    score: partial
+    justification: >
+      Trace() records every message and the matrix makes the 16.7% auditable, but the benefit
+      is only visible when the benchmark or the matrix is read, not in operation — a working
+      call looks like any SIP client's working call.
+  suitable_for: early-adopters
+  chasm_blockers: []
