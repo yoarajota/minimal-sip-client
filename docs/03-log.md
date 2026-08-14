@@ -55,6 +55,7 @@ is scaffolded (docs/matrix.md). The component rewrite itself is not started.
 digest handling is required on INVITE, not only REGISTER — matrix row 4; (2) in-dialog
 requests must send the Request-URI as the bare Contact URI and the To tag outside the angle
 brackets — two PoC bugs (bareURI extraction, tag placement) that cost two debugging rounds
-and are fixed in poc/.
+and are fixed in poc/. Resolved by the P3 work: D-001 (surface), D-002 (test strategy),
+D-003 (toolchain), E-003 and E-004 (evidence).
 
-**Disposition:** promoted: D-001, D-002, D-003, E-003, E-004
+**Disposition:** promoted: D-001
