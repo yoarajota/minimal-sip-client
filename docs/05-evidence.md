@@ -203,11 +203,118 @@ python3 tools/sota.py validate .    # from the project root; exit 0 = G4 passes
 
 ## Benchmark methodology
 
-Filled at P5. Applies to every entry tagged as a benchmark.
+Applies to E-006, E-007, E-008 (the P5 H-001 measurement).
 
-- **What is measured:** TODO
-- **Runs:** TODO (≥ 5), **warm-up:** TODO
-- **Held constant:** TODO
-- **Baseline configuration:** TODO — the same tuning effort was spent on the baseline as on
-  the concept; if not, say so, because it invalidates the comparison.
-- **Known measurement bias:** TODO
+- **What is measured:** the scenario suite *completion* — register, two-way RTP call,
+  hold/resume, teardown — by the minimal client (concept) and by the PJSIP 2.17 incumbent
+  (baseline), and the subset size: how many of RFC 3261's normative MUST statements the
+  suite forces. Not a speed benchmark: the claim is about subset size, not performance, and
+  the crossover is the 50% falsifier line, not a latency curve.
+- **Runs:** 5 per leg (concept and baseline), full warm call lifecycle per run (each run is
+  itself a warm-up; registration + call establishment precede measurement), 1 fault leg.
+  Variance is reported per run.
+- **Held constant:** pinned images (Asterisk certified 20.7-cert11, golang 1.22-alpine,
+  pjproject tag 2.17), one compose network, no host ports, same five configuration values
+  on both clients, same PBX dialplan (`Echo()`).
+- **Baseline configuration:** PJSIP 2.17 built from source with its recommended
+  configuration (configure defaults, -O2), used via its own high-level Python API
+  (pjsua.py) with `no_sound`. No extra tuning was spent on the baseline; the comparison is
+  about completing the same suite, so tuning asymmetry cannot distort the measured quantity.
+  This asymmetry (none) is stated per workflow step 1.
+- **Known measurement bias:** the media-count axis is protocol-level (RTP packets) and
+  robust to machine speed; wall-time figures are indicative only (laptop under WSL2, thermal
+  throttling possible and disclosed). The forced-statement judgment in docs/matrix.md is an
+  audit of the implementation against the RFC text (E-007) and is bounded above by the
+  unfiltered count 152/590 = 25.8% — even a reader who rejects every role-filtering call
+  stays under the 50% line, so the verdict is not sensitive to the judgment.
+
+---
+
+### E-006 — P5 benchmark: concept suite ×5 and fault injection
+
+**Claim.** The minimal client completes the scenario suite against the real pinned Asterisk
+20 container 5 times (each run: register → two-way RTP call → hold → resume → teardown,
+media counts and wall time recorded), and under fault injection — the PBX container killed
+mid-call — surfaces the hangup timeout (408-class TransactionError after the 64×T1 window)
+and exits cleanly. Supports S-001, S-002, TRL 6 for `core`, and R-003's mitigation.
+
+**Environment:** containerised (compose network, no host ports):
+`andrius/asterisk:20.7-cert11_debian-trixie` + `golang:1.22-alpine`; Docker Desktop 29.6.1
+(WSL2), compose v5.3.0; client built with Go 1.22.2.
+
+```bash
+./bench/run.sh    # from the repository root; exit 0 = every run of every leg passed
+```
+
+**Result:** exit 0 (observed 2026-08-14). Concept leg: 5/5 runs passed, wall time 11.51 s per run
+(media counts in the run log; active-phase sent/recv symmetric through Asterisk `Echo()`). Fault
+leg: the PBX container was killed mid-call — media stopped, the hangup BYE timed out with a
+408-class TransactionError after the 64×T1 window (32 s), clean exit. Per-run media counts and
+wall times are in the run log (bench/run.sh prints them; reproduced by re-running the command).
+
+**Status:** reproducing
+**Supports:** H-001, S-001, S-002, TRL 6 for `core`
+**Recorded:** 2026-08-14
+
+---
+
+### E-007 — P5 message-trace matrix: the subset measurement
+
+**Claim.** The matrix (docs/matrix.md) enumerates, auditable statement-by-statement, the
+normative MUST statements the implemented client forces: 90 statements (16.7%) of the 540
+whole-RFC statements, 103/590 = 17.5% on the occurrence unit, and 156/590 = 26.4% even
+counting every occurrence in the cited sections without role filtering. All three sit well
+under the 50% falsifier line. Supports S-003 and the H-001 verdict.
+
+**Environment:** the extraction is reproducible offline after one fetch; the forced-statement
+judgment is an audit of `internal/sip` against the RFC text (both pinned).
+
+```bash
+python3 bench/extract-musts.py    # from the repository root; reproduces the counts
+```
+
+**Result:** exit 0. Output ends with the three ratios (90/540 = 16.7%, 103/590 = 17.5%,
+156/590 = 26.4%) — observed 2026-08-14. The statement-by-statement enumeration with quoted
+RFC text is in docs/matrix.md.
+
+**Status:** reproducing
+**Supports:** H-001, S-003, the falsifier check
+**Recorded:** 2026-08-14
+
+---
+
+### E-008 — P5 baseline: PJSIP 2.17 completes the same suite + the cost table
+
+**Claim.** The PJSIP 2.17 incumbent (pjsua2, the stack's own high-level Python API, built
+from source tag 2.17) completes the suite's protocol steps against the same pinned Asterisk
+5 times: register (200), call (CONFIRMED), two-way media (≈100 RTP packets/3 s through the
+echo path, driven by a 440 Hz tone — the same tone the concept client sends), hold
+(re-INVITE sendonly → 200, media stops), resume re-INVITE (sendrecv → 200), hangup. **One
+finding, recorded, not tuned away:** pjsua2 cannot restart a held call's media without a
+sound device — after the resume 200 the stream stays inactive and only stray packets return
+(`media-restart=no`). The concept client resumes media fully (102/102, E-004/E-006), so it
+completes every suite step where the incumbent's Python API in a headless container does not.
+The cost clause is measured on both units: on the statement unit, 450 of 540 (83.3%)
+normative MUST statements are not forced; on the occurrence unit, 487 of 590 (82.5%).
+Unforced occurrences by section (from E-001's per-section survey): §7 message basics 12, §8
+58, §10 33, §12 35, §13 17, §16 proxy 134, §17 36, §18 22, §19 28, §20 18, §22 19, §23 S/MIME
+16, remainder (CANCEL/OPTIONS/INFO, §21 response codes, §5–6, §9, §11, §14, §15, §24–26) 59.
+Plus the suite-external features the incumbent supports and the concept does not (forking,
+presence/SUBSCRIBE, PRACK/100rel, session timers, TCP/TLS, non-PCMU codecs).
+
+**Environment:** containerised (compose network): `minimal-sip-baseline:pjsua-2.17` image
+built from pjproject tag 2.17 (Dockerfile in bench/baseline/), same Asterisk and network as
+the concept leg.
+
+```bash
+./bench/run.sh    # baseline leg (leg 2) runs pjsua 5 times; exit 0 = all passed
+```
+
+**Result:** exit 0 (observed 2026-08-14). Baseline leg: 5/5 runs PASS —
+`register=200 call=CONFIRMED media=active(rx ~101–103) hold=ok(sendonly) resume-reinvite=200
+media-restart=no(headless pjsua2 limitation) bye=ok`. The media-restart finding is
+reproducible across all 5 runs and documented in bench/README.md.
+
+**Status:** reproducing
+**Supports:** H-001 (baseline side), the cost clause
+**Recorded:** 2026-08-14

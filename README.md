@@ -17,11 +17,19 @@ occurrences in RFC 3261 (E-001).
 against a pinned Asterisk 20 instance), a from-scratch SIP client requires fewer than half of
 RFC 3261's normative MUST requirements to complete the same suite that PJSIP 2.17 completes in
 full, at the cost of not supporting SIP features outside the suite (forking, presence,
-subscription, NAT traversal, S/MIME). → *verdict: untested* (decided at P5 from the
-message-trace matrix).
+subscription, NAT traversal, S/MIME). → *verdict: supported* (decided at P5, 2026-08-14).
+
+The suite forces **90 of 540** normative MUST statements (16.7%) — 103/590 = 17.5% on the
+occurrence unit, and 156/590 = 26.4% even counting every MUST in the cited sections without
+role filtering (E-007). All three are far under the 50% falsifier line, while the full PJSIP
+2.17 stack completes the same suite's protocol steps (E-008): its Python API's media does
+not restart after hold in the headless container (a recorded finding, E-008), whereas the
+concept client resumes media fully. The cost: 450 of 540 statements (83.3%) are not
+forced — proxy behaviour (§16: 134), S/MIME (§23: 16), presence/SUBSCRIBE, PRACK, session
+timers, TCP/TLS, other codecs (E-008).
 
 *Falsified if* the smallest subset that completes the suite still implements a majority
-(≥ 50%) of the normative MUST requirements.
+(≥ 50%) of the normative MUST requirements — not approached under any counting rule.
 
 ## Baseline
 
@@ -88,14 +96,25 @@ method. Sourced and referenced in [docs/01-theory.md](docs/01-theory.md).
 | E-002 | P2 PoC completes the suite against the real PBX | `./poc/run.sh` | exit 0; media 152/152 echo |
 | E-003 | Component unit suite: conformance, failure-mode, property | `make test` | exit 0; 20 tests + fuzz corpus |
 | E-004 | Component integration suite against the real PBX | `./run-suite.sh` | exit 0; register/call/hold/resume/teardown |
+| E-006 | Benchmark: concept suite ×5 + fault injection (PBX killed mid-call) | `./bench/run.sh` | exit 0; 5/5 runs, clean 408 on killed PBX |
+| E-007 | The subset measurement: 90/540 = 16.7% (103/590, 156/590 bounds) | `python3 bench/extract-musts.py` | exit 0; ratios printed |
+| E-008 | Baseline: PJSIP 2.17 completes the suite's protocol steps ×5 + cost table | `./bench/run.sh` | exit 0; 5/5 PASS; media-restart finding recorded |
 
 Full ledger: [docs/05-evidence.md](docs/05-evidence.md).
 
 ## Limitations
 
-- **The baseline (PJSIP 2.17) is not yet measured here** — the suite runs the concept client
-  only; the comparative "subset size vs. full stack" measurement lands at P5. Until then the
-  claim rests on the matrix (docs/matrix.md), not on a PJSIP run.
+- **The comparative measurement is now made (E-007/E-008), and its boundary is the suite**
+  itself: the 16.7% subset number holds for *this* scenario suite and *this* pinned
+  configuration. A suite that added forking, presence, or TCP would force more MUSTs — the
+  matrix (docs/matrix.md) is the instrument for re-measuring. The PJSIP 2.17 baseline side is
+  a functional completion proof (E-008), not a code-size comparison.
+- **The incumbent's Python API cannot restart a held call's media headless.** pjsua2 (PJSIP
+  2.17) completes the suite's protocol steps — register, call, media, hold (sendonly 200),
+  resume re-INVITE (200), hangup — but its media stream stays inactive after the resume 200
+  with no sound device in the container (E-008, reproducible 5/5). The concept client resumes
+  media fully (102/102). Recorded as a finding; it favours the concept, so it is stated
+  rather than tuned away.
 - **The client is a measurement instrument first.** A competent engineer solving the *call*
   problem with PJSIP loses nothing for using SIP (that is the substitution check, A5). What
   the incumbent cannot do — and this repo exists for — is say which parts of RFC 3261 are

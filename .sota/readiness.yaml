@@ -1,19 +1,24 @@
 components:
 - id: core
   role: concept
-  trl: 5
+  trl: 6
   evidence_refs:
   - E-001
   - E-002
   - E-003
   - E-004
+  - E-006
+  - E-007
+  - E-008
   notes: 'The from-scratch SIP client: a minimal RFC 3261 implementation (register, call establishment,
     hold/resume, teardown) carrying RTP media, plus the trace recorder feeding the message-trace matrix.
-    TRL 5: the internal/sip component completes the scenario suite against a real, pinned Asterisk 20
-    PBX — the relevant environment — in containers (E-004, one command, exit 0), and passes the three
-    unit test layers (E-003) and the ISO 5055 quality gate. TRL 4 markers (conformance tests, ADRs D-001–
-    D-003, quality gates) and TRL 5 markers (real transport via the pinned Asterisk container) are both
-    evidenced.
+    TRL 6: the prototype is demonstrated in a high-fidelity simulated operational environment — the pinned
+    Asterisk 20.7 container with real SIP/RTP transport, defined interfaces (README public interface,
+    D-001), repeated measured runs (bench/run.sh, 5x, E-006) and injected faults at the real seam (Asterisk
+    killed mid-call: media stops, BYE times out with a 408, clean exit — R-003 mitigation, E-006). Boundary
+    stated: single concurrent call (the volume axis is repetition, not concurrency), no monitoring — TRL
+    7 (a real operational deployment) is not claimed. TRL 4/5 markers (conformance tests, ADRs, quality
+    gates, relevant environment) remain evidenced by E-003/E-004.
 
     '
 - id: asterisk
@@ -69,15 +74,15 @@ integrations:
   - E-004
 not_applicable: []
 computed:
-  composite_srl: 0.5027
-  translated_srl: 4
-  strict_srl: 0.3189
+  composite_srl: 0.5336
+  translated_srl: 5
+  strict_srl: 0.356
   component_srl:
-    core: 0.4527
-    asterisk: 0.6543
-    client-runtime: 0.4012
-  weakest_component: client-runtime (0.4012)
+    core: 0.4897
+    asterisk: 0.6852
+    client-runtime: 0.4259
+  weakest_component: client-runtime (0.4259)
   weakest_integration: core<->client-runtime (IRL 4)
   generated_at: '2026-08-14'
   generator: auto-generated
-  input_digest: e440ef3d8b85d2f3
+  input_digest: 4dc15eebe376d072

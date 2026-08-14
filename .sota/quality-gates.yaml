@@ -43,9 +43,9 @@ utility_tree:
       of implemented behaviours with a complete trace (target: all).
     priority: medium
     difficulty: medium
-    verification: docs/04-tradeoffs.md
-    status: unverified
-    evidence_refs: []
+    verification: docs/matrix.md
+    status: pass
+    evidence_refs: [E-007]
 
 iso5055:
   # One command that runs every check below and exits non-zero on violation.

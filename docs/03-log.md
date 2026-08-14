@@ -78,3 +78,24 @@ the client. Also recorded: three non-risks (fake-UAS fidelity, containerised-Ast
 fidelity, single-flight branch filtering) whose assumptions must be visible at P5.
 
 **Disposition:** promoted: E-005
+
+---
+
+### L-003 — 2026-08-14 — P5 evidence: H-001 measured and supported
+
+**Context:** G4 passed (ATAM-lite, IRL seams, first SRL). Advanced to P5. The measurement's
+counting unit had been decided at P3 (distinct normative MUST statements the behaviour
+forces); the operationalisation (which statements count, no double counting across rows, two
+robustness cross-checks) was recorded in docs/matrix.md before the counts were finalised.
+
+**Found:** the measurement — 90/540 normative MUST statements forced (16.7%), with 103/590 =
+17.5% and 156/590 = 26.4% as the occurrence and unfiltered bounds — lands far under the 50%
+falsifier line on every unit, so H-001 is supported. Three findings along the way: (1) the
+transaction layer (§17) is the biggest forced chunk (33 statements) — the retransmission
+state machine is the real cost of a minimal client, not headers or digest; (2) the §7
+request-line constraints (3 statements) were initially missed and added during the audit —
+the counting is only as good as the section sweep; (3) the fault-injection leg (PBX killed
+mid-call, R-003's mitigation) proved the 64×T1 BYE timeout at the real seam — media stops,
+BYE times out at 408, clean exit.
+
+**Disposition:** promoted: E-007

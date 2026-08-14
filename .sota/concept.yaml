@@ -2,8 +2,8 @@ id: C-004
 slug: minimal-sip-client
 title: "Minimal SIP client: what RFC 3261 subset is sufficient to register and hold a call with a real PBX?"
 archetype: implementation
-phase: P4
-status: active
+phase: P5
+status: supported
 
 # The stack is declared explicitly so gate commands and verification paths are concrete
 # rather than assumed. Any language is valid.
@@ -65,8 +65,11 @@ hypotheses:
       normative MUST requirements to complete the same suite that PJSIP 2.17 completes in full,
       at the cost of not supporting SIP features outside the suite (forking, presence,
       subscription).
-    verdict: untested
-    evidence_refs: []
+    verdict: supported
+    evidence_refs:
+    - E-006
+    - E-007
+    - E-008
     revisions: []
 
 # Set once the remote exists (bootstrap step 3). Required only at G6, so it stays
