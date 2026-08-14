@@ -6,7 +6,7 @@ quality:
 	@test -z "$$(gofmt -l $$(find . -name '*.go' -not -path '*/vendor/*'))" \
 	  || { echo "gofmt needed on the files listed above"; exit 1; }
 	go vet ./...
-	go build ./...
+	go build -o /dev/null .
 
 test:
 	go test ./... -count=1

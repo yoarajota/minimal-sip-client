@@ -6,6 +6,9 @@ dist/
 build/
 *.egg-info/
 
+# Compiled binary (the client's own entry point, rebuilt via `make`)
+/minimal-sip-client
+
 # Tool caches
 __pycache__/
 *.pyc
