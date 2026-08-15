@@ -29,3 +29,6 @@ __pycache__/
 # Benchmark scratch output. Committed results belong in docs/05-evidence.md.
 bench/out/
 *.prof
+
+# playwright-cli snapshot artifacts
+docs/artifact/.playwright-cli/
