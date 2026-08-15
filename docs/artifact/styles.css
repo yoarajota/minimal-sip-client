@@ -365,7 +365,8 @@ main { max-width: 46rem; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3rem); }
   .claim { grid-template-columns: 2rem 1fr; }
   .claim-ref { grid-column: 2; text-align: left; }
   .lim { grid-template-columns: 1fr; }
-  .tbl { display: block; overflow-x: auto; }
+  .tbl, .legend { display: block; overflow-x: auto; }
+  .chip { white-space: normal; }
 }
 
 @media print {

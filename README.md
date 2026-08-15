@@ -184,6 +184,7 @@ Full ledger: [docs/05-evidence.md](docs/05-evidence.md).
 | Document | Contents |
 | :--- | :--- |
 | [docs/01-theory.md](docs/01-theory.md) | What the literature establishes, with the `SRC-###` source ledger. |
+| [docs/artifact/index.html](docs/artifact/index.html) | The plain-language explainer — open it directly in a browser (no server). |
 | [docs/03-log.md](docs/03-log.md) | Append-only working log: what was tried, including what failed. |
 | [docs/04-tradeoffs.md](docs/04-tradeoffs.md) | ATAM-lite: drivers, scenarios, sensitivity and tradeoff points, risks. |
 | [docs/05-evidence.md](docs/05-evidence.md) | Every claim, its command, environment, and observed result. |

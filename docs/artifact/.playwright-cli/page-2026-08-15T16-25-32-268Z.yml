@@ -1,0 +1,263 @@
+- generic [active] [ref=e1]:
+  - button "Toggle dark and light mode" [ref=e2] [cursor=pointer]: PAPER/INK
+  - main [ref=e3]:
+    - generic [ref=e4]:
+      - paragraph [ref=e5]: VOIP — NETWORKING
+      - 'heading "Minimal SIP client: what RFC 3261 subset is sufficient to register and hold a call with a real PBX?" [level=1] [ref=e6]'
+      - paragraph [ref=e7]: What subset of RFC 3261 is necessary and sufficient for a from-scratch SIP client to register, establish, and tear down a two-way RTP call against a mainstream PBX?
+      - generic [ref=e8]:
+        - 'generic "Status: supported" [ref=e9]': supported
+        - paragraph [ref=e10]: A from-scratch SIP client needs only 90 of RFC 3261's 540 normative must-statements (16.7%) to register, call, hold, resume and hang up against a real PBX — and resumes a held call's media where the reference stack's own API cannot (E-007, E-008).
+    - paragraph [ref=e11]: "SIP (RFC 3261) is a 300-page protocol, and a production stack carries all of it: forking, presence, encryption, timers, retransmissions, S/MIME. This repository asks how much of that is actually load-bearing for one ordinary job — a client that registers with a PBX, makes a two-way audio call, puts it on hold, brings it back, and hangs up. We built that client from zero, with no SIP library, and then enumerated, statement by statement, which of the protocol's normative requirements the scenarios actually force. The answer: 90 of 540, or 16.7% (E-007). The reference stack, PJSIP 2.17, completes the same suite — and its own high-level API cannot restart a held call's media without a sound device, while the 1,100-line client here can (E-008)."
+    - generic [ref=e12]:
+      - heading "How to read this page" [level=2] [ref=e13]
+      - table "How to read this page — the jargon, once" [ref=e14]:
+        - caption [ref=e15]: How to read this page — the jargon, once
+        - rowgroup [ref=e16]:
+          - row "verdict chip the bottom line of this project — green means the claim held, red means it was disproved, amber means partly, dashed means not decided" [ref=e17]:
+            - rowheader "verdict chip" [ref=e18]
+            - cell "the bottom line of this project — green means the claim held, red means it was disproved, amber means partly, dashed means not decided" [ref=e19]
+          - row "paused / archived chip the work was deliberately stopped at this point — the verdicts below are the last state it reached" [ref=e20]:
+            - rowheader "paused / archived chip" [ref=e21]
+            - cell "the work was deliberately stopped at this point — the verdicts below are the last state it reached" [ref=e22]
+          - row "in progress chip this project is still running — the verdicts below are not final" [ref=e23]:
+            - rowheader "in progress chip" [ref=e24]
+            - cell "this project is still running — the verdicts below are not final" [ref=e25]
+          - row "scenario chips (pass / fail / unverified) a concrete situation the concept was required to handle, and whether it was demonstrated, failed, or never measured" [ref=e26]:
+            - rowheader "scenario chips (pass / fail / unverified)" [ref=e27]
+            - cell "a concrete situation the concept was required to handle, and whether it was demonstrated, failed, or never measured" [ref=e28]
+          - row "diffusion chips (strong / partial / weak) how ready each adoption-relevant trait is today, in the author's assessment" [ref=e29]:
+            - rowheader "diffusion chips (strong / partial / weak)" [ref=e30]
+            - cell "how ready each adoption-relevant trait is today, in the author's assessment" [ref=e31]
+          - row "weakest link the least proven part of the system as a whole — what most limits using it for real" [ref=e32]:
+            - rowheader "weakest link" [ref=e33]
+            - cell "the least proven part of the system as a whole — what most limits using it for real" [ref=e34]
+          - row "E-001 … E-999 a measured result, linked to the evidence document — every claim on this page points at one" [ref=e35]:
+            - rowheader "E-001 … E-999" [ref=e36]
+            - cell "a measured result, linked to the evidence document — every claim on this page points at one" [ref=e37]
+          - 'row "H-001 … H-999 a hypothesis: the specific prediction this project set out to test, stated before measuring" [ref=e38]':
+            - rowheader "H-001 … H-999" [ref=e39]
+            - 'cell "a hypothesis: the specific prediction this project set out to test, stated before measuring" [ref=e40]'
+          - 'row "S-001 … S-999 a scenario: one concrete situation the concept was required to handle, with a pass or fail verdict" [ref=e41]':
+            - rowheader "S-001 … S-999" [ref=e42]
+            - 'cell "a scenario: one concrete situation the concept was required to handle, with a pass or fail verdict" [ref=e43]'
+          - row "baseline the boring, standard solution the concept competes against — every 'faster' on this page is faster than this, measured in the same environment" [ref=e44]:
+            - rowheader "baseline" [ref=e45]
+            - cell "the boring, standard solution the concept competes against — every 'faster' on this page is faster than this, measured in the same environment" [ref=e46]
+          - 'row "TRL technology readiness, 1–9: how proven the idea is, from ''paper idea'' (1) to ''running in production'' (9)" [ref=e47]':
+            - rowheader "TRL" [ref=e48]
+            - 'cell "technology readiness, 1–9: how proven the idea is, from ''paper idea'' (1) to ''running in production'' (9)" [ref=e49]'
+          - 'row "SRL system readiness, 1–9: how well the parts work together, not just individually" [ref=e50]':
+            - rowheader "SRL" [ref=e51]
+            - 'cell "system readiness, 1–9: how well the parts work together, not just individually" [ref=e52]'
+          - 'row "IRL integration readiness, 1–9: how proven the seam between two parts is" [ref=e53]':
+            - rowheader "IRL" [ref=e54]
+            - 'cell "integration readiness, 1–9: how proven the seam between two parts is" [ref=e55]'
+          - 'row "suitable for who can realistically adopt this today: innovators and early adopters can absorb rough edges; the majority should wait until the weak points below are fixed" [ref=e56]':
+            - rowheader "suitable for" [ref=e57]
+            - 'cell "who can realistically adopt this today: innovators and early adopters can absorb rough edges; the majority should wait until the weak points below are fixed" [ref=e58]'
+          - row "dead ends approaches that were tried and abandoned — published so the next person does not walk the same alley" [ref=e59]:
+            - rowheader "dead ends" [ref=e60]
+            - cell "approaches that were tried and abandoned — published so the next person does not walk the same alley" [ref=e61]
+    - generic [ref=e62]:
+      - heading "The numbers" [level=2] [ref=e63]
+      - list [ref=e64]:
+        - listitem [ref=e65]:
+          - generic [ref=e66]: "01"
+          - paragraph [ref=e67]: 16.7% — the fraction of RFC 3261's normative must-statements (90 of 540) a client needs to complete the whole scenario suite, 33 points under the 50% falsifier line (E-007).
+          - generic [ref=e68]: E-007
+        - listitem [ref=e69]:
+          - generic [ref=e70]: "02"
+          - paragraph [ref=e71]: 102/102 — RTP packets exchanged after a held call resumes, where the reference stack's own API returns no media stream at all in the same headless environment (E-008).
+          - generic [ref=e72]: E-008
+        - listitem [ref=e73]:
+          - generic [ref=e74]: "03"
+          - paragraph [ref=e75]: "32 s — exactly how long the client takes to notice a PBX killed mid-call: media stops, the hangup times out at the protocol's own 64×T1 bound, and the client exits cleanly (E-006)."
+          - generic [ref=e76]: E-006
+      - generic [ref=e77]:
+        - paragraph [ref=e78]: REPRODUCE IT YOURSELF
+        - generic [ref=e79]: $ make tools && make quality $ docker compose up -d asterisk $ ./run-suite.sh $ ./bench/run.sh
+    - generic [ref=e80]:
+      - heading "What we claimed — and what happened" [level=2] [ref=e81]
+      - article [ref=e82]:
+        - blockquote [ref=e83]:
+          - paragraph [ref=e84]: H-001 Under the scenario suite (register, two-way RTP call, hold/resume, teardown against a pinned Asterisk version), a from-scratch SIP client requires fewer than half of RFC 3261's normative MUST requirements to complete the same suite that PJSIP 2.17 completes in full, at the cost of not supporting SIP features outside the suite (forking, presence, subscription).
+        - generic [ref=e85]:
+          - 'generic "Status: supported" [ref=e86]': supported
+          - paragraph [ref=e87]: decided by E-006 · E-007 · E-008
+    - generic [ref=e88]:
+      - heading "How ready is this?" [level=2] [ref=e89]
+      - img "TRL 6 of 9" [ref=e90]:
+        - generic [ref=e91]:
+          - generic [ref=e92]: TRL
+          - generic [ref=e93]: 6/9
+          - generic [ref=e94]: System prototype demonstrated
+      - img "SRL 5 of 9" [ref=e97]:
+        - generic [ref=e98]:
+          - generic [ref=e99]: SRL
+          - generic [ref=e100]: 5/9
+          - generic [ref=e101]: High-risk component technology development defined
+      - paragraph [ref=e104]: WEAKEST LINK — core<->client-runtime (IRL 4)
+      - table [ref=e105]:
+        - rowgroup [ref=e106]:
+          - row "Scenario What it demands Result" [ref=e107]:
+            - columnheader "Scenario" [ref=e108]
+            - columnheader "What it demands" [ref=e109]
+            - columnheader "Result" [ref=e110]
+        - rowgroup [ref=e111]:
+          - row "S-001 functional-suitability pass" [ref=e112]:
+            - cell "S-001" [ref=e113]
+            - cell "functional-suitability" [ref=e114]
+            - cell "pass" [ref=e115]:
+              - generic [ref=e116]: pass
+          - row "S-002 reliability pass" [ref=e117]:
+            - cell "S-002" [ref=e118]
+            - cell "reliability" [ref=e119]
+            - cell "pass" [ref=e120]:
+              - generic [ref=e121]: pass
+          - row "S-003 maintainability pass" [ref=e122]:
+            - cell "S-003" [ref=e123]
+            - cell "maintainability" [ref=e124]
+            - cell "pass" [ref=e125]:
+              - generic [ref=e126]: pass
+      - generic [ref=e127]:
+        - paragraph [ref=e128]: WHO CAN ADOPT THIS TODAY — early-adopters
+        - paragraph [ref=e129]:
+          - generic [ref=e130]: clear advantage over what people use today · partial
+          - generic [ref=e131]: fits existing setups · partial
+          - generic [ref=e132]: easy to understand and adopt · strong
+          - generic [ref=e133]: easy to try out · strong
+          - generic [ref=e134]: you can see it working · partial
+    - generic [ref=e135]:
+      - heading "The story" [level=2] [ref=e136]
+      - generic [ref=e137]:
+        - article [ref=e138]:
+          - heading "Theory" [level=3] [ref=e139]
+          - heading "What the protocol actually demands" [level=4] [ref=e140]
+          - paragraph [ref=e141]: "A full survey of RFC 3261 found 590 normative must-occurrences across every section — and a suspicion that almost none of them are needed for an ordinary call. The falsification line was fixed in advance: if completing the suite forces a majority of them, the claim is wrong."
+        - article [ref=e142]:
+          - heading "Proof of concept" [level=3] [ref=e143]
+          - heading "A working call against a real PBX" [level=4] [ref=e144]
+          - paragraph [ref=e145]: The first client registered, called, held, resumed and tore down against a real Asterisk container — media flowed both ways (152/152). That proved the scenario suite was completable, not that the subset was small.
+        - article [ref=e146]:
+          - heading "The component" [level=3] [ref=e147]
+          - heading "A client worth auditing" [level=4] [ref=e148]
+          - paragraph [ref=e149]: "The client was rebuilt as a small, auditable component with the wire trace recorded on every message — and the trace became the instrument: each behaviour carries the RFC section that forces it, so the subset is enumerable rather than asserted."
+        - article [ref=e150]:
+          - heading "The measurement" [level=3] [ref=e151]
+          - heading "Counting what the suite forces" [level=4] [ref=e152]
+          - paragraph [ref=e153]: The enumeration came in at 90 of 540 statements (16.7%), with two stricter counting rules also far under the line. The 590-occurrence text never needed to be reached — the claim held under the rule that should have caught inflation.
+        - article [ref=e154]:
+          - heading "The comparison" [level=3] [ref=e155]
+          - heading "The incumbent, run head to head" [level=4] [ref=e156]
+          - paragraph [ref=e157]: "PJSIP 2.17 built from source, same suite, same PBX, five runs each — and one genuine finding: its high-level API cannot restart a held call's media headless. The client here can, and the limitation is reported rather than tuned away."
+      - generic [ref=e158]:
+        - heading "WHAT WE TRIED THAT DIDN'T WORK" [level=3] [ref=e159]
+        - article [ref=e160]:
+          - heading "The INVITE that forgot its body" [level=4] [ref=e161]
+          - paragraph [ref=e162]: "The first client sent its INVITE with Content-Length: 0 — no SDP at all. The call \"succeeded\" and no media ever flowed. Only the integration suite against the real PBX caught it; the regression test that guards it now is part of the suite (E-004)."
+        - article [ref=e163]:
+          - heading "The re-INVITE that collided with itself" [level=4] [ref=e164]
+          - paragraph [ref=e165]: A hold re-INVITE reused the CSeq of the initial INVITE after the digest retry — the PBX answered 491 Request Pending. The dialog CSeq has to be the one actually used on the wire, not the one the code intended. A property test now pins the invariant.
+        - article [ref=e166]:
+          - heading "The baseline that could not come back from hold" [level=4] [ref=e167]
+          - paragraph [ref=e168]: "Getting PJSIP 2.17's Python API to restart a held call's media headless ate the longest debug stretch of the comparison: its unhold offers a port-0 loopback (488), media re-initialisation crashes, and a manual offer leaves the stream inactive. The endpoint is a documented limitation (E-008), not a fix — and the client here does the step the incumbent cannot."
+    - generic [ref=e169]:
+      - heading "What we learned" [level=2] [ref=e170]
+      - list [ref=e171]:
+        - listitem [ref=e172]: "A protocol standard is not a load-bearing surface: most of RFC 3261's normative requirements exist for deployments this scenario cannot touch — proxies, forking, encryption, presence, S/MIME."
+        - listitem [ref=e173]: "Deciding the falsifier before measuring is what keeps the result honest: at 16.7%, the temptation is to loosen the counting; the pre-registered 50% line is why nobody can accuse the number of being tuned."
+        - listitem [ref=e174]: "Running the incumbent under the same conditions is a measurement instrument of its own: it surfaced a real pjsua2 limitation (no headless media restart) that no amount of code reading would have found."
+        - listitem [ref=e175]: "Record the wire, not the intention: the message trace turned a pass/fail suite into an audit trail, and that trail is the paper backing every number in this repository."
+    - generic [ref=e176]:
+      - heading "Where this falls short" [level=2] [ref=e177]
+      - generic [ref=e178]:
+        - generic [ref=e179]:
+          - heading "WHERE THE BASELINE WINS" [level=3] [ref=e180]
+          - paragraph [ref=e181]: "For breadth, the incumbent wins outright: PJSIP ships forking, presence, TCP/TLS, every codec and two decades of field hardening. A general-purpose communications product should use PJSIP; the only claim here is about the size of the load-bearing subset (E-008)."
+        - generic [ref=e182]:
+          - heading "WHAT IS UNTESTED" [level=3] [ref=e183]
+          - paragraph [ref=e184]: Interop is proven against exactly one PBX (a pinned Asterisk 20); media is one client against Asterisk's Echo() with no second real endpoint; only UDP and PCMU are implemented, so a PBX that demands TLS or another codec will not complete the suite (R-001, R-002, R-004).
+        - generic [ref=e185]:
+          - heading "WHAT WOULD MOVE IT FORWARD" [level=3] [ref=e186]
+          - paragraph [ref=e187]: "The next readiness level needs a production-like environment: a second real endpoint, a load generator, sustained multi-call traffic, and monitoring. Nothing in this suite provides those yet."
+        - generic [ref=e188]:
+          - heading "BUILT-IN COSTS" [level=3] [ref=e189]
+          - paragraph [ref=e190]: The client is a measurement instrument first. An engineer solving the call problem with PJSIP loses nothing by using SIP — the point of this repository is the 16.7% and the matrix behind it, not the client.
+    - generic [ref=e191]:
+      - heading "Should you use it?" [level=2] [ref=e192]
+      - paragraph [ref=e193]:
+        - strong [ref=e194]: Engineers who want to know which parts of a 300-page protocol are actually load-bearing for an ordinary client scenario — and anyone building a minimal SIP endpoint (embedded, scenario-based, or educational) who wants the auditable statement-by-statement list.
+      - paragraph [ref=e195]:
+        - strong [ref=e196]: "Not for:"
+        - text: "Not a library for a general-purpose product: no forking, no TLS, one codec, one proven PBX. And not a tutorial — it is a measurement with a working example attached."
+    - generic [ref=e197]:
+      - heading "The evidence" [level=2] [ref=e198]
+      - table [ref=e199]:
+        - rowgroup [ref=e200]:
+          - row "Evidence What it measured" [ref=e201]:
+            - columnheader "Evidence" [ref=e202]
+            - columnheader "What it measured" [ref=e203]
+        - rowgroup [ref=e204]:
+          - 'row "E-001 P1 literature survey: RFC 3261 subset mechanism" [ref=e205]':
+            - cell "E-001" [ref=e206]:
+              - link "E-001" [ref=e207] [cursor=pointer]:
+                - /url: ../05-evidence.md
+            - 'cell "P1 literature survey: RFC 3261 subset mechanism" [ref=e208]'
+          - 'row "E-002 P2 proof of concept: minimal client completes the suite against a real PBX" [ref=e209]':
+            - cell "E-002" [ref=e210]:
+              - link "E-002" [ref=e211] [cursor=pointer]:
+                - /url: ../05-evidence.md
+            - 'cell "P2 proof of concept: minimal client completes the suite against a real PBX" [ref=e212]'
+          - 'row "E-003 Component unit suite: conformance, failure-mode and property tests" [ref=e213]':
+            - cell "E-003" [ref=e214]:
+              - link "E-003" [ref=e215] [cursor=pointer]:
+                - /url: ../05-evidence.md
+            - 'cell "Component unit suite: conformance, failure-mode and property tests" [ref=e216]'
+          - row "E-004 Component integration suite against the real PBX" [ref=e217]:
+            - cell "E-004" [ref=e218]:
+              - link "E-004" [ref=e219] [cursor=pointer]:
+                - /url: ../05-evidence.md
+            - cell "Component integration suite against the real PBX" [ref=e220]
+          - row "E-005 P4 tradeoff analysis (ATAM-lite) and integration scores" [ref=e221]:
+            - cell "E-005" [ref=e222]:
+              - link "E-005" [ref=e223] [cursor=pointer]:
+                - /url: ../05-evidence.md
+            - cell "P4 tradeoff analysis (ATAM-lite) and integration scores" [ref=e224]
+          - 'row "E-006 P5 benchmark: concept suite ×5 and fault injection" [ref=e225]':
+            - cell "E-006" [ref=e226]:
+              - link "E-006" [ref=e227] [cursor=pointer]:
+                - /url: ../05-evidence.md
+            - 'cell "P5 benchmark: concept suite ×5 and fault injection" [ref=e228]'
+          - 'row "E-007 P5 message-trace matrix: the subset measurement" [ref=e229]':
+            - cell "E-007" [ref=e230]:
+              - link "E-007" [ref=e231] [cursor=pointer]:
+                - /url: ../05-evidence.md
+            - 'cell "P5 message-trace matrix: the subset measurement" [ref=e232]'
+          - 'row "E-008 P5 baseline: PJSIP 2.17 completes the same suite + the cost table" [ref=e233]':
+            - cell "E-008" [ref=e234]:
+              - link "E-008" [ref=e235] [cursor=pointer]:
+                - /url: ../05-evidence.md
+            - 'cell "P5 baseline: PJSIP 2.17 completes the same suite + the cost table" [ref=e236]'
+    - generic [ref=e237]:
+      - heading "Dig deeper" [level=2] [ref=e238]
+      - list [ref=e239]:
+        - listitem [ref=e240]:
+          - link "The theory →" [ref=e241] [cursor=pointer]:
+            - /url: ../01-theory.md
+          - generic [ref=e242]: What the literature establishes, and where the idea came from
+        - listitem [ref=e243]:
+          - link "The evidence →" [ref=e244] [cursor=pointer]:
+            - /url: ../05-evidence.md
+          - generic [ref=e245]: Every claim on this page, with the command and environment that produced it
+        - listitem [ref=e246]:
+          - link "The tradeoffs →" [ref=e247] [cursor=pointer]:
+            - /url: ../04-tradeoffs.md
+          - generic [ref=e248]: What was analysed against what, and the risks that remain open
+        - listitem [ref=e249]:
+          - link "The decisions →" [ref=e250] [cursor=pointer]:
+            - /url: ../adr/D-001-public-surface.md
+          - generic [ref=e251]: Why the design looks the way it does — and the options that were rejected
+  - contentinfo [ref=e252]:
+    - link "https://github.com/yoarajota/minimal-sip-client" [ref=e253] [cursor=pointer]:
+      - /url: https://github.com/yoarajota/minimal-sip-client

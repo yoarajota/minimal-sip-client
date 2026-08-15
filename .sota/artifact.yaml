@@ -10,56 +10,117 @@
 # - Evidence references must resolve to docs/05-evidence.md entries (E-###).
 
 pitch:
-  one_line_answer: "TODO"
-  elevator: "TODO"
+  one_line_answer: >
+    A from-scratch SIP client needs only 90 of RFC 3261's 540 normative must-statements
+    (16.7%) to register, call, hold, resume and hang up against a real PBX — and resumes a
+    held call's media where the reference stack's own API cannot (E-007, E-008).
+  elevator: >
+    SIP (RFC 3261) is a 300-page protocol, and a production stack carries all of it: forking,
+    presence, encryption, timers, retransmissions, S/MIME. This repository asks how much of
+    that is actually load-bearing for one ordinary job — a client that registers with a PBX,
+    makes a two-way audio call, puts it on hold, brings it back, and hangs up. We built that
+    client from zero, with no SIP library, and then enumerated, statement by statement, which
+    of the protocol's normative requirements the scenarios actually force. The answer: 90 of
+    540, or 16.7% (E-007). The reference stack, PJSIP 2.17, completes the same suite — and its
+    own high-level API cannot restart a held call's media without a sound device, while the
+    1,100-line client here can (E-008).
 
 # The strongest measured results, as {text, evidence} pairs. Each text names the number
 # and the comparison; each evidence is the E-### that produced it. The verdict itself is
 # NOT here — it is derived from the hypothesis data.
-headline: []
+headline:
+  - text: "16.7% — the fraction of RFC 3261's normative must-statements (90 of 540) a client needs to complete the whole scenario suite, 33 points under the 50% falsifier line (E-007)."
+    evidence: "E-007"
+  - text: "102/102 — RTP packets exchanged after a held call resumes, where the reference stack's own API returns no media stream at all in the same headless environment (E-008)."
+    evidence: "E-008"
+  - text: "32 s — exactly how long the client takes to notice a PBX killed mid-call: media stops, the hangup times out at the protocol's own 64×T1 bound, and the client exits cleanly (E-006)."
+    evidence: "E-006"
 
 # The commands a reader runs to reproduce the headline result, in order.
-reproduce: []
+reproduce:
+  - "make tools && make quality"
+  - "docker compose up -d asterisk"
+  - "./run-suite.sh"
+  - "./bench/run.sh"
 
 # The phase-by-phase story, in order. `phase` is a plain story label (e.g. "Theory",
 # "Proof of concept", "Evidence") — never a process label like "P1 —". Three to six
 # steps; each summary tells what changed in the reader's terms.
-journey: []
+journey:
+  - phase: "Theory"
+    title: "What the protocol actually demands"
+    summary: >
+      A full survey of RFC 3261 found 590 normative must-occurrences across every section —
+      and a suspicion that almost none of them are needed for an ordinary call. The
+      falsification line was fixed in advance: if completing the suite forces a majority of
+      them, the claim is wrong.
+  - phase: "Proof of concept"
+    title: "A working call against a real PBX"
+    summary: >
+      The first client registered, called, held, resumed and tore down against a real Asterisk
+      container — media flowed both ways (152/152). That proved the scenario suite was
+      completable, not that the subset was small.
+  - phase: "The component"
+    title: "A client worth auditing"
+    summary: >
+      The client was rebuilt as a small, auditable component with the wire trace recorded on
+      every message — and the trace became the instrument: each behaviour carries the RFC
+      section that forces it, so the subset is enumerable rather than asserted.
+  - phase: "The measurement"
+    title: "Counting what the suite forces"
+    summary: >
+      The enumeration came in at 90 of 540 statements (16.7%), with two stricter counting
+      rules also far under the line. The 590-occurrence text never needed to be reached — the
+      claim held under the rule that should have caught inflation.
+  - phase: "The comparison"
+    title: "The incumbent, run head to head"
+    summary: >
+      PJSIP 2.17 built from source, same suite, same PBX, five runs each — and one genuine
+      finding: its high-level API cannot restart a held call's media headless. The client
+      here can, and the limitation is reported rather than tuned away.
 
 # Optional: dead ends that were never recorded in docs/03-log.md (e.g. they were recorded
 # as ADR rejected options instead). When present, these replace the log-derived list.
 # Each entry: {title, text}. Omit the whole block to use the log-derived list.
-#
-# dead_ends:
-#   - title: ""
-#     text: ""
+dead_ends:
+  - title: "The INVITE that forgot its body"
+    text: >
+      The first client sent its INVITE with Content-Length: 0 — no SDP at all. The call
+      "succeeded" and no media ever flowed. Only the integration suite against the real PBX
+      caught it; the regression test that guards it now is part of the suite (E-004).
+  - title: "The re-INVITE that collided with itself"
+    text: >
+      A hold re-INVITE reused the CSeq of the initial INVITE after the digest retry — the
+      PBX answered 491 Request Pending. The dialog CSeq has to be the one actually used on
+      the wire, not the one the code intended. A property test now pins the invariant.
+  - title: "The baseline that could not come back from hold"
+    text: >
+      Getting PJSIP 2.17's Python API to restart a held call's media headless ate the
+      longest debug stretch of the comparison: its unhold offers a port-0 loopback (488),
+      media re-initialisation crashes, and a manual offer leaves the stream inactive. The
+      endpoint is a documented limitation (E-008), not a fix — and the client here does the
+      step the incumbent cannot.
 
 # What a future reader should take away. One thought per entry, no numbering needed.
-lessons: []
+lessons:
+  - "A protocol standard is not a load-bearing surface: most of RFC 3261's normative requirements exist for deployments this scenario cannot touch — proxies, forking, encryption, presence, S/MIME."
+  - "Deciding the falsifier before measuring is what keeps the result honest: at 16.7%, the temptation is to loosen the counting; the pre-registered 50% line is why nobody can accuse the number of being tuned."
+  - "Running the incumbent under the same conditions is a measurement instrument of its own: it surfaced a real pjsua2 limitation (no headless media restart) that no amount of code reading would have found."
+  - "Record the wire, not the intention: the message trace turned a pass/fail suite into an audit trail, and that trail is the paper backing every number in this repository."
 
 limitations:
-  baseline_wins: "TODO"
-  untested: "TODO"
-  next_level: "TODO"
-  structural: "TODO"
+  baseline_wins: "For breadth, the incumbent wins outright: PJSIP ships forking, presence, TCP/TLS, every codec and two decades of field hardening. A general-purpose communications product should use PJSIP; the only claim here is about the size of the load-bearing subset (E-008)."
+  untested: "Interop is proven against exactly one PBX (a pinned Asterisk 20); media is one client against Asterisk's Echo() with no second real endpoint; only UDP and PCMU are implemented, so a PBX that demands TLS or another codec will not complete the suite (R-001, R-002, R-004)."
+  next_level: "The next readiness level needs a production-like environment: a second real endpoint, a load generator, sustained multi-call traffic, and monitoring. Nothing in this suite provides those yet."
+  structural: "The client is a measurement instrument first. An engineer solving the call problem with PJSIP loses nothing by using SIP — the point of this repository is the 16.7% and the matrix behind it, not the client."
 
 audience:
-  who_is_this_for: "TODO"
-  not_for: "TODO"
+  who_is_this_for: "Engineers who want to know which parts of a 300-page protocol are actually load-bearing for an ordinary client scenario — and anyone building a minimal SIP endpoint (embedded, scenario-based, or educational) who wants the auditable statement-by-statement list."
+  not_for: "Not a library for a general-purpose product: no forking, no TLS, one codec, one proven PBX. And not a tutorial — it is a measurement with a working example attached."
 
 # Optional: the headline chart. x_ticks are [label, depth] pairs placed on a logarithmic
 # x-axis; y_ticks are the numeric gridlines; ymax bounds the y-axis; crossover marks the
 # measured switch point; series has one `baseline` (dashed, neutral) and one `concept`
 # (accent). Omit the whole block if the concept has no headline curve.
-#
-# chart:
-#   title: "p95 page latency vs offset depth"
-#   evidence: "E-004"
-#   caption: "5,000,000 rows · PostgreSQL 16.4 · 10-depth sweep, p95 of 20 samples each"
-#   x_ticks: [["100", 100], ["1K", 1000], ["10K", 10000], ["100K", 100000]]
-#   y_ticks: [0, 50, 100, 150, 200]
-#   ymax: 200
-#   crossover: { depth: 100, label: "crossover ≈ 100" }
-#   series:
-#     - { name: "OFFSET/LIMIT (baseline)", kind: baseline, points: [[100, 0.5], [1000, 0.5], [10000, 1.4]] }
-#     - { name: "keyset", kind: concept, points: [[100, 0.41], [1000, 0.34], [10000, 0.51]] }
+# (Omitted: the result is three discrete counting points under a fixed line, not a curve —
+# a log-scaled sweep would be fabricated data. The claims list carries the numbers.)
