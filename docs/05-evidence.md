@@ -162,21 +162,25 @@ through Asterisk `Echo()`); held phase received 0; resumed phase sent 102 / rece
 
 ### E-005 — P4 tradeoff analysis (ATAM-lite) and integration scores
 
-**Claim.** The P4 analysis records the architecture, its drivers, 5 sensitivity points,
-2 tradeoff points, 6 risks (all with states), 3 non-risks, and the five-attack adversarial
-pass; the declared system (3 components, 2 seams) scores core↔asterisk IRL 5 and
-core↔client-runtime IRL 4, each `rationale` naming the blocker for the next level. The G4
-gate, which requires ≥ 3 sensitivity points, ≥ 1 tradeoff point, ≥ 1 integration and a
-provisioning declaration for every non-concept component, passes.
+**Claim.** The P4 analysis records the architecture, its drivers, 5 sensitivity points, 2 tradeoff
+points, 6 risks (all with states) and 3 non-risks, and declares 3 components with 2 seams whose
+integration readiness is core↔asterisk 5 and core↔client-runtime 4, each with a rationale naming
+the blocker for the next level. The counts below are asserted against the documents that carry
+them, so the claim is checkable without re-running the analysis.
 
-**Environment:** none (document analysis against the gate's own checks).
+**Environment:** none (document analysis over `docs/04-tradeoffs.md` and `.sota/readiness.yaml`).
 
-```bash
-python3 tools/sota.py validate .    # from the project root; exit 0 = G4 passes
+```sh
+# one count per line: sensitivity points, tradeoff points, risks, non-risks, scored seams
+grep -oE '^\| SP-[0-9]{3}' docs/04-tradeoffs.md | wc -l
+grep -oE '^\| TP-[0-9]{3}' docs/04-tradeoffs.md | wc -l
+grep -oE '^\| R-[0-9]{3}' docs/04-tradeoffs.md | wc -l
+grep -oE '^\| NR-[0-9]{3}' docs/04-tradeoffs.md | wc -l
+grep -cE '^  irl: ' .sota/readiness.yaml
 ```
 
-**Result:** exit 0 (observed 2026-08-14). Findings and scores are in
-[docs/04-tradeoffs.md](04-tradeoffs.md) and `.sota/readiness.yaml`.
+**Result:** `5 2 6 3 2` (observed 2026-09-16, matching the earlier gate run of 2026-08-14).
+Findings and scores are in [docs/04-tradeoffs.md](04-tradeoffs.md) and `.sota/readiness.yaml`.
 
 **Status:** reproducing
 **Supports:** G4 gate, S-001, S-002, S-003

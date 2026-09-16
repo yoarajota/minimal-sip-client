@@ -63,18 +63,16 @@ behaviour — the far end is the PBX.
 
 ### Readiness scorecard
 
-_Auto-generated. Do not hand-edit._
+_Machine-generated from this repository's readiness data — do not hand-edit._
 
 | Measure | Value | Meaning |
 | :--- | :--- | :--- |
 | **TRL** | **6** | System prototype demonstrated |
 | **SRL**  | **5** | High-risk component technology development defined — seams only |
-| Composite SRL | 0.534 | standard formulation (all components, diagonal-inclusive) |
+| Composite SRL | 0.534 | aggregate over all components (0–1) |
 | Weakest component | client-runtime (0.4259) | lowest component-level SRL |
 | Weakest seam | core<->client-runtime (IRL 4) | lowest-scoring integration pair |
-| Phase | P6 | |
-| Hypothesis | supported | |
-| Suitable for | early-adopters | |
+| Suitable for | early-adopters | audience for which this result is ready |
 
 | Component | Role | TRL | Component SRL |
 | :--- | :--- | :-: | :-: |

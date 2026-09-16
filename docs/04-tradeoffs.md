@@ -1,6 +1,6 @@
 # Tradeoff analysis — Minimal SIP client: what RFC 3261 subset is sufficient to register and hold a call with a real PBX?
 
-ATAM-lite, produced at P4. Instrument: `framework/instruments/atam-lite.md`.
+ATAM-lite, produced at P4.
 
 ## 1. Drivers
 
