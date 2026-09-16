@@ -15,7 +15,7 @@
     "created": "2026-08-14",
     "updated": "2026-08-14",
     "generated_at": "2026-09-16",
-    "input_digest": "eb93df40f6681b16"
+    "input_digest": "29410a5d9671c686"
   },
   "pitch": {
     "one_line_answer": "A from-scratch SIP client needs only 90 of RFC 3261's 540 normative must-statements (16.7%) to register, call, hold, resume and hang up against a real PBX — and resumes a held call's media where the reference stack's own API cannot (E-007, E-008).\n",
