@@ -30,7 +30,11 @@ PBX_IP = os.environ.get("SIP_PBX_IP", "172.18.0.2")  # the asterisk container
 
 def fail(step, detail):
     print(f"FAIL {step}: {detail}", flush=True)
-    sys.exit(1)
+    # os._exit, not sys.exit: a normal shutdown runs the swig destructors, which assert after
+    # hangup and hang the container, so a failed run never reported its failure (see the note at
+    # the successful exit path). Found when the media threshold below was raised: the leg went
+    # silent instead of failing.
+    os._exit(1)
 
 
 def make_tone(path="/tmp/tone.wav", freq=440.0, seconds=60, rate=8000):
@@ -122,8 +126,12 @@ def main():
     # media: the PBX's Echo() echoes our tone back — count the echoed RTP.
     time.sleep(1.0)
     rx_active = rtp_packets(3)
-    if rx_active == 0:
-        fail("media", "no RTP received from the PBX during the call")
+    # The tone is 33 packets/s (PCMU, 20 ms); 3 s of echo is ~100 packets. The threshold was
+    # `== 0`, which let a nearly silent media path print PASS — and did: the same suite printed
+    # rx 1 on one host and rx ~101-103 on another, both passing. 10 is the same floor the resume
+    # phase below already uses.
+    if rx_active < 10:
+        fail("media", f"echo path carried only {rx_active} packets in 3 s (need >= 10)")
     rx_before_hold = rtp_packets(3)
 
     call.setHold(pjsua2.CallOpParam())

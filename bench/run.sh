@@ -36,8 +36,13 @@ if want concept; then
 echo "== leg 1/3: concept suite, ${RUNS} runs =="
 docker compose up -d asterisk >/dev/null
 for i in $(seq 1 "$RUNS"); do
-  out=$(docker compose run --rm client \
-        sh -c "go test -tags integration -v ./internal/sip/ -run TestSuiteIntegration" 2>&1)
+  # `if ! out=$(...)` rather than a bare assignment: under `set -e` a failing command
+  # substitution exits the script immediately, so the failure branch below never ran and a
+  # failing leg died silently at its own header.
+  if ! out=$(docker compose run --rm client \
+        sh -c "go test -tags integration -v ./internal/sip/ -run TestSuiteIntegration" 2>&1); then
+    echo "FAIL concept run $i (client exited non-zero)"; echo "$out" | tail -20; exit 1
+  fi
   if ! echo "$out" | grep -q -- "--- PASS: TestSuiteIntegration"; then
     echo "FAIL concept run $i"; echo "$out" | tail -20; exit 1
   fi
@@ -55,7 +60,9 @@ if want baseline; then
 echo "== leg 2/3: PJSIP 2.17 baseline (pjsua), ${RUNS} runs =="
 docker build -q -t minimal-sip-baseline:pjsua-2.17 bench/baseline >/dev/null
 for i in $(seq 1 "$RUNS"); do
-  out=$(docker compose run --rm baseline python /app/baseline.py 2>&1)
+  if ! out=$(docker compose run --rm baseline python /app/baseline.py 2>&1); then
+    echo "FAIL baseline run $i (baseline exited non-zero)"; echo "$out" | tail -20; exit 1
+  fi
   # the PASS line can merge onto a pjsua log line (no leading newline)
   if ! echo "$out" | grep -q "PASS register="; then
     echo "FAIL baseline run $i"; echo "$out" | tail -20; exit 1

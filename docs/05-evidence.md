@@ -371,21 +371,35 @@ leg: 5/5 runs PASS —
 `register=200 call=CONFIRMED media=active(rx ~101–103) hold=ok(sendonly) resume-reinvite=200
 media-restart=no(headless pjsua2 limitation) bye=ok`.
 
-**One field did not reproduce, and it is recorded rather than reconciled.** The 2026-09-16 run
-printed the same PASS line with `media=active(rx 1)` against the ~101–103 recorded here. The
-harness fails the media step only when the count is exactly zero
-(`bench/baseline/baseline.py: fail("media", ...)` on `rx_active == 0`), so a nearly silent media
-path still prints PASS: the assertion is looser than this claim implies. Whether the count is
-environment-dependent or a regression in the baseline harness is unverified — the per-run line is
-in the committed data, so the next reader can tell which number their host produces. The media-restart finding is
-reproducible across all 5 runs and documented in bench/README.md.
+**One field did not reproduce, and the harness has been tightened because of it.** The
+2026-09-16 run printed the same PASS line with `media=active(rx 1)` against the ~101–103 recorded
+here, and the media step only failed when the count was exactly zero — so a nearly silent echo path
+printed PASS. The threshold is now `>= 10` (the same floor the resume phase already used), and under
+it **this host fails the baseline leg**:
 
+```
+FAIL media: echo path carried only 1 packets in 3 s (need >= 10)
+```
+
+Two harness bugs surfaced while establishing that, both fixed: `fail()` used `sys.exit`, whose
+normal shutdown runs the swig destructors that the successful path deliberately skips with
+`os._exit` — so a failing run hung the container instead of reporting; and `if ! out=$(...)` was a
+bare `out=$(...)` under `set -e`, so a failing leg killed the script at its own header without
+printing the failure.
+
+**What this does and does not narrow.** The suite's state checks — register 200, call CONFIRMED,
+hold sendonly, resume re-INVITE 200, `media-restart=no`, BYE — reproduce, and the cost clause is
+untouched: it is counted from the RFC ledger, not from this leg. What does not reproduce outside an
+environment whose RTP echo path carries the tone is the `media=active(rx ~101–103)` field, and this
+entry no longer asserts it. The claim here is therefore scoped to an environment of the kind the
+harness declares (a host where the PBX's `Echo()` returns the client's tone), and on a host where it
+does not, the baseline leg fails loudly rather than passing on one packet.
 
 **Verifies:** exit-zero
 **Verifies:** output-contains "register=200 call=CONFIRMED"
 **Verifies:** output-contains "media-restart=no"
 **Verifies:** computed-from evidence-data/benchmark-runs.json path=baseline.runs_passed value=5
 
-**Status:** reproducing
+**Status:** broken
 **Supports:** H-001 (baseline side), the cost clause
 **Recorded:** 2026-08-14
