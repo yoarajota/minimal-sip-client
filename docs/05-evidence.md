@@ -275,12 +275,15 @@ and exits cleanly. Supports S-001, S-002, TRL 6 for `core`, and R-003's mitigati
 
 **Kind:** benchmark
 
+**Data:** evidence-data/benchmark-runs.json (sha256: 73d4d85ccfe4f4f6719ca3ffa8b383bbe8189434bbab10a8b7345e2a0d617661)
+
 **Environment:** containerised (compose network, no host ports):
 `andrius/asterisk:20.7-cert11_debian-trixie` + `golang:1.22-alpine`; Docker Desktop 29.6.1
 (WSL2), compose v5.3.0; client built with Go 1.22.2.
 
-```bash
-./bench/run.sh    # from the repository root; exit 0 = every run of every leg passed
+```sh
+./bench/run.sh              # all three legs; a full read of the benchmark
+LEGS=concept,fault ./bench/run.sh   # this entry's legs (E-008 covers the baseline leg)
 ```
 
 **Result:** exit 0 (observed 2026-08-14). Concept leg: 5/5 runs passed, wall time 11.51 s per run
@@ -289,7 +292,12 @@ leg: the PBX container was killed mid-call — media stopped, the hangup BYE tim
 408-class TransactionError after the 64×T1 window (32 s), clean exit. Per-run media counts and
 wall times are in the run log (bench/run.sh prints them; reproduced by re-running the command).
 
+
 **Verifies:** exit-zero
+**Verifies:** output-contains "ALL LEGS PASS"
+**Verifies:** computed-from evidence-data/benchmark-runs.json path=concept.runs_passed value=5
+**Verifies:** computed-from evidence-data/benchmark-runs.json path=fault.passed value=1
+**Verifies:** computed-from evidence-data/benchmark-runs.json path=baseline.runs_passed value=5
 
 **Status:** reproducing
 **Supports:** H-001, S-001, S-002, TRL 6 for `core`
@@ -348,20 +356,35 @@ presence/SUBSCRIBE, PRACK/100rel, session timers, TCP/TLS, non-PCMU codecs).
 
 **Kind:** benchmark
 
+**Data:** evidence-data/benchmark-runs.json (sha256: 73d4d85ccfe4f4f6719ca3ffa8b383bbe8189434bbab10a8b7345e2a0d617661)
+
 **Environment:** containerised (compose network): `minimal-sip-baseline:pjsua-2.17` image
 built from pjproject tag 2.17 (Dockerfile in bench/baseline/), same Asterisk and network as
 the concept leg.
 
-```bash
-./bench/run.sh    # baseline leg (leg 2) runs pjsua 5 times; exit 0 = all passed
+```sh
+LEGS=baseline ./bench/run.sh   # the incumbent's leg only
 ```
 
-**Result:** exit 0 (observed 2026-08-14). Baseline leg: 5/5 runs PASS —
+**Result:** exit 0 (observed 2026-08-14; re-verified 2026-09-16 on a different host). Baseline
+leg: 5/5 runs PASS —
 `register=200 call=CONFIRMED media=active(rx ~101–103) hold=ok(sendonly) resume-reinvite=200
-media-restart=no(headless pjsua2 limitation) bye=ok`. The media-restart finding is
+media-restart=no(headless pjsua2 limitation) bye=ok`.
+
+**One field did not reproduce, and it is recorded rather than reconciled.** The 2026-09-16 run
+printed the same PASS line with `media=active(rx 1)` against the ~101–103 recorded here. The
+harness fails the media step only when the count is exactly zero
+(`bench/baseline/baseline.py: fail("media", ...)` on `rx_active == 0`), so a nearly silent media
+path still prints PASS: the assertion is looser than this claim implies. Whether the count is
+environment-dependent or a regression in the baseline harness is unverified — the per-run line is
+in the committed data, so the next reader can tell which number their host produces. The media-restart finding is
 reproducible across all 5 runs and documented in bench/README.md.
 
+
 **Verifies:** exit-zero
+**Verifies:** output-contains "register=200 call=CONFIRMED"
+**Verifies:** output-contains "media-restart=no"
+**Verifies:** computed-from evidence-data/benchmark-runs.json path=baseline.runs_passed value=5
 
 **Status:** reproducing
 **Supports:** H-001 (baseline side), the cost clause

@@ -1,0 +1,21 @@
+{
+  "runs_per_leg": 5,
+  "legs": "concept,baseline,fault",
+  "concept": {
+    "ran": true,
+    "runs_passed": 5,
+    "wall_time_s": [11.51,11.51,11.51,11.51,11.51],
+    "summary": "TestSuiteIntegration (11.51s) PASS: TestSuiteIntegration (11.51s)  TestSuiteIntegration (11.51s) PASS: TestSuiteIntegration (11.51s)  TestSuiteIntegration (11.51s) PASS: TestSuiteIntegration (11.51s)  TestSuiteIntegration (11.51s) PASS: TestSuiteIntegration (11.51s)  TestSuiteIntegration (11.51s) PASS: TestSuiteIntegration (11.51s) "
+  },
+  "baseline": {
+    "ran": true,
+    "runs_passed": 5,
+    "pass_lines": ["PASS register=200 call=CONFIRMED media=active(rx 1) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok\"PASS register=200 call=CONFIRMED media=active(rx 1) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok\"PASS register=200 call=CONFIRMED media=active(rx 1) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok\"PASS register=200 call=CONFIRMED media=active(rx 1) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok\"PASS register=200 call=CONFIRMED media=active(rx 1) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok"]
+  },
+  "fault": {
+    "ran": true,
+    "passed": true,
+    "line": "PASS killed-pbx: media stopped, BYE -> 408 after 32s, clean exit"
+  },
+  "all_legs_pass": true
+}

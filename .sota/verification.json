@@ -42,9 +42,13 @@
     },
     "E-006": {
       "checks": [
-        "exit-zero"
+        "exit-zero",
+        "output-contains",
+        "computed-from",
+        "computed-from",
+        "computed-from"
       ],
-      "date": "2026-09-16",
+      "date": "2026-09-17",
       "outcome": "pass"
     },
     "E-007": {
@@ -57,12 +61,15 @@
     },
     "E-008": {
       "checks": [
-        "exit-zero"
+        "exit-zero",
+        "output-contains",
+        "output-contains",
+        "computed-from"
       ],
-      "date": "2026-09-16",
+      "date": "2026-09-17",
       "outcome": "pass"
     }
   },
-  "generated": "2026-09-16",
+  "generated": "2026-09-17",
   "tool": "verify_evidence.py"
 }
