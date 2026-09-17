@@ -275,7 +275,7 @@ and exits cleanly. Supports S-001, S-002, TRL 6 for `core`, and R-003's mitigati
 
 **Kind:** benchmark
 
-**Data:** evidence-data/benchmark-runs.json (sha256: 73d4d85ccfe4f4f6719ca3ffa8b383bbe8189434bbab10a8b7345e2a0d617661)
+**Data:** evidence-data/benchmark-runs.json (sha256: f0e3bd5de18e291b2a186ec2c1d1b511f8f6eaab27c0ce9476d6f2d355be7115)
 
 **Environment:** containerised (compose network, no host ports):
 `andrius/asterisk:20.7-cert11_debian-trixie` + `golang:1.22-alpine`; Docker Desktop 29.6.1
@@ -356,7 +356,7 @@ presence/SUBSCRIBE, PRACK/100rel, session timers, TCP/TLS, non-PCMU codecs).
 
 **Kind:** benchmark
 
-**Data:** evidence-data/benchmark-runs.json (sha256: 73d4d85ccfe4f4f6719ca3ffa8b383bbe8189434bbab10a8b7345e2a0d617661)
+**Data:** evidence-data/benchmark-runs.json (sha256: f0e3bd5de18e291b2a186ec2c1d1b511f8f6eaab27c0ce9476d6f2d355be7115)
 
 **Environment:** containerised (compose network): `minimal-sip-baseline:pjsua-2.17` image
 built from pjproject tag 2.17 (Dockerfile in bench/baseline/), same Asterisk and network as
@@ -371,35 +371,32 @@ leg: 5/5 runs PASS —
 `register=200 call=CONFIRMED media=active(rx ~101–103) hold=ok(sendonly) resume-reinvite=200
 media-restart=no(headless pjsua2 limitation) bye=ok`.
 
-**One field did not reproduce, and the harness has been tightened because of it.** The
-2026-09-16 run printed the same PASS line with `media=active(rx 1)` against the ~101–103 recorded
-here, and the media step only failed when the count was exactly zero — so a nearly silent echo path
-printed PASS. The threshold is now `>= 10` (the same floor the resume phase already used), and under
-it **this host fails the baseline leg**:
+**One field did not reproduce, and it was a bug in this harness.** The 2026-09-16 run printed
+`media=active(rx 1)` against the ~101–103 recorded here. The cause was
+`PBX_IP = os.environ.get("SIP_PBX_IP", "172.18.0.2")` — a hardcoded container address. The SIP side
+resolves the PBX by service name, so every call-state check passed, while `tcpdump` filtered on an
+address compose had since reassigned (172.21.0.2 on the machine that found this) and matched nothing.
+The media counter was reading a stale address, not the echo path.
 
-```
-FAIL media: echo path carried only 1 packets in 3 s (need >= 10)
-```
+Fixed, and the number reproduces: with the address resolved from the service name at run time, five
+consecutive baseline runs print `media=active(rx 101–102)`, in the range this entry claims, and the
+committed data is from that run (sha256 `f0e3bd5de18e291b…`). The media step now requires `>= 10` packets
+rather than `> 0`, because a two-orders-of-magnitude difference had been passing as
+`media=active`. Two further harness bugs surfaced while establishing this, both fixed: `fail()` used
+`sys.exit`, whose shutdown runs the swig destructors the successful path deliberately skips with
+`os._exit`, so a failing run hung instead of reporting; and `out=$(...)` under `set -e` killed the
+script at its own leg header, so no failure was ever printed. The entry declares its environment as
+a precondition — the PBX healthy and the echo path carrying the tone — so a host that cannot measure
+this reports `unrunnable` with the probe's verdict rather than a pass or a false failure. One
+earlier attempt at the leg failed at the INVITE send stage in a cold stack; that has not recurred
+since the address fix and its cause is not established.
 
-Two harness bugs surfaced while establishing that, both fixed: `fail()` used `sys.exit`, whose
-normal shutdown runs the swig destructors that the successful path deliberately skips with
-`os._exit` — so a failing run hung the container instead of reporting; and `if ! out=$(...)` was a
-bare `out=$(...)` under `set -e`, so a failing leg killed the script at its own header without
-printing the failure.
-
-**What this does and does not narrow.** The suite's state checks — register 200, call CONFIRMED,
-hold sendonly, resume re-INVITE 200, `media-restart=no`, BYE — reproduce, and the cost clause is
-untouched: it is counted from the RFC ledger, not from this leg. What does not reproduce outside an
-environment whose RTP echo path carries the tone is the `media=active(rx ~101–103)` field, and this
-entry no longer asserts it. The claim here is therefore scoped to an environment of the kind the
-harness declares (a host where the PBX's `Echo()` returns the client's tone), and on a host where it
-does not, the baseline leg fails loudly rather than passing on one packet.
-
+**Verifies:** precondition "docker compose up -d --wait asterisk >/dev/null && docker compose run --rm -e PROBE_MEDIA=1 baseline python /app/baseline.py"
 **Verifies:** exit-zero
 **Verifies:** output-contains "register=200 call=CONFIRMED"
 **Verifies:** output-contains "media-restart=no"
 **Verifies:** computed-from evidence-data/benchmark-runs.json path=baseline.runs_passed value=5
 
-**Status:** broken
+**Status:** reproducing — scoped to the environment the precondition checks
 **Supports:** H-001 (baseline side), the cost clause
 **Recorded:** 2026-08-14

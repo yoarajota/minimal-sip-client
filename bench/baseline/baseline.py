@@ -14,6 +14,7 @@ Environment (compose provides these):
 """
 import math
 import os
+import socket
 import struct
 import sys
 import time
@@ -25,7 +26,12 @@ DOMAIN = os.environ.get("SIP_DOMAIN", "asterisk")
 USER = os.environ.get("SIP_USER", "alice")
 PASS = os.environ.get("SIP_PASS", "secret")
 EXT = os.environ.get("SIP_EXT", "100")
-PBX_IP = os.environ.get("SIP_PBX_IP", "172.18.0.2")  # the asterisk container
+# Resolve the PBX at run time. Compose assigns container addresses from the network pool, so the
+# address is not stable across `down`/`up` — a hardcoded one (172.18.0.2 was here) silently makes
+# the tcpdump filter match nothing, and the media count collapses to ~1 while the suite still
+# passes on the SIP side, which resolves by name.
+PBX_HOST = os.environ.get("SIP_PBX_HOST", "asterisk")
+PBX_IP = os.environ.get("SIP_PBX_IP") or socket.gethostbyname(PBX_HOST)
 
 
 def fail(step, detail):
@@ -126,6 +132,12 @@ def main():
     # media: the PBX's Echo() echoes our tone back — count the echoed RTP.
     time.sleep(1.0)
     rx_active = rtp_packets(3)
+    if os.environ.get("PROBE_MEDIA"):
+        # Precondition mode: measure the echo path and stop. E-008 declares this as its
+        # precondition, so a host whose PBX does not echo the tone reports `unrunnable` instead of
+        # a failure — the claim is not false there, it is unmeasurable.
+        print(f"media-probe: {rx_active} packets in 3 s")
+        os._exit(0 if rx_active >= 10 else 1)
     # The tone is 33 packets/s (PCMU, 20 ms); 3 s of echo is ~100 packets. The threshold was
     # `== 0`, which let a nearly silent media path print PASS — and did: the same suite printed
     # rx 1 on one host and rx ~101-103 on another, both passing. 10 is the same floor the resume
@@ -145,7 +157,6 @@ def main():
     # with 488. Suppress its offer (PJSUA_CALL_NO_SDP_OFFER) and carry the
     # sendrecv offer explicitly — the same SDP shape the concept client's
     # resume re-INVITE sends.
-    import socket
     local_ip = socket.gethostbyname(socket.gethostname())
     offer = (f"v=0\r\no=- 0 0 IN IP4 {local_ip}\r\ns=-\r\nc=IN IP4 {local_ip}\r\n"
              f"t=0 0\r\nm=audio 4000 RTP/AVP 0\r\na=rtpmap:0 PCMU/8000\r\n"

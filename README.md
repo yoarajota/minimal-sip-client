@@ -145,6 +145,8 @@ Full ledger: [docs/05-evidence.md](docs/05-evidence.md).
 - A re-INVITE whose CSeq collided with the initial INVITE's was answered 491 (Request Pending)
   — the dialog CSeq must be the CSeq actually used on the wire after the auth retry.
 
+- **The baseline's media count was under-measuring, and that is fixed.** `media=active(rx)` filtered its `tcpdump` on a hardcoded container address, which compose reassigns, so it counted almost nothing while every SIP state check passed. It now resolves the PBX by service name and requires ten packets rather than more than zero; five runs then read `rx 101–102`, matching the recorded figure. The leg declares its environment as a precondition, so a host without a working echo path reports the entry as unrunnable instead of passing on a stale number.
+
 ## Documents
 
 | Document | Contents |

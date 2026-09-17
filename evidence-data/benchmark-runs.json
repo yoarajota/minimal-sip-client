@@ -10,7 +10,7 @@
   "baseline": {
     "ran": true,
     "runs_passed": 5,
-    "pass_lines": ["PASS register=200 call=CONFIRMED media=active(rx 1) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok\"PASS register=200 call=CONFIRMED media=active(rx 1) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok\"PASS register=200 call=CONFIRMED media=active(rx 1) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok\"PASS register=200 call=CONFIRMED media=active(rx 1) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok\"PASS register=200 call=CONFIRMED media=active(rx 1) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok"]
+    "pass_lines": ["PASS register=200 call=CONFIRMED media=active(rx 102) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok\"PASS register=200 call=CONFIRMED media=active(rx 102) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok\"PASS register=200 call=CONFIRMED media=active(rx 102) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok\"PASS register=200 call=CONFIRMED media=active(rx 102) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok\"PASS register=200 call=CONFIRMED media=active(rx 101) hold=ok(sendonly) resume-reinvite=200 media-restart=no(headless pjsua2 limitation) bye=ok"]
   },
   "fault": {
     "ran": true,

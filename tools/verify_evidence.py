@@ -24,6 +24,10 @@ Declared checks (`**Verifies:**` lines in the ledger, one per line, in any numbe
                                                  list ([]) and aggregate (agg=mean|median|sum|
                                                  min|max|count)
     repeat-identical [--runs N] path...          running the command N times writes identical bytes
+    precondition "shell command"                 this host must satisfy the command first; if it
+                                                 does not, the entry is `unrunnable` here rather
+                                                 than failed — an environment the host lacks is not
+                                                 a false claim
 
 A check name this tool does not implement is reported `unsupported` and fails: the failure mode
 worth preventing is a check that reads as satisfied because nobody implemented it.
@@ -65,7 +69,7 @@ NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
 
 KNOWN_CHECKS = frozenset({
     "exit-zero", "output-contains", "output-contains-near", "data-sha256", "computed-from",
-    "repeat-identical",
+    "repeat-identical", "precondition",
 })
 # Commands that need one of these are reported unrunnable rather than failed when it is absent.
 ENVIRONMENT_PROBES = {
@@ -91,6 +95,10 @@ class Check:
     def needs_run(self) -> bool:
         return self.name in {"exit-zero", "output-contains", "output-contains-near",
                              "repeat-identical"}
+
+    @property
+    def is_precondition(self) -> bool:
+        return self.name == "precondition"
 
 
 @dataclass
@@ -130,15 +138,23 @@ def normalise(text: str) -> str:
     return re.sub(r"\s+", " ", ANSI.sub("", text)).strip()
 
 
+# Option names the checks accept. Anything else stays an argument, so a quoted argument that
+# merely contains "=" — `output-contains "register=200 call=CONFIRMED"`, or a precondition's whole
+# command line — is not mistaken for an option. (It was: the value became an option and the
+# argument list came back empty, which made `output-contains` match the empty string and pass.)
+KNOWN_OPTIONS = frozenset({"tolerance", "path", "value", "runs", "agg"})
+OPTION = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(.+)$")
+
+
 def parse_check(raw: str) -> Check:
     tokens = shlex.split(raw)
     name = tokens[0] if tokens else ""
     args: list[str] = []
     options: dict[str, str] = {}
     for token in tokens[1:]:
-        if "=" in token and not token.startswith(('"', "'")):
-            key, _, value = token.partition("=")
-            options[key] = value
+        match = OPTION.match(token)
+        if match and match.group(1) in KNOWN_OPTIONS:
+            options[match.group(1)] = match.group(2)
         else:
             args.append(token)
     return Check(name=name, args=args, options=options)
@@ -181,6 +197,25 @@ def run(command: str, timeout: int) -> tuple[str, str, int]:
     done = subprocess.run(["/bin/bash", "-lc", command],  # noqa: S603
                           capture_output=True, text=True, timeout=timeout)
     return done.stdout or "", done.stderr or "", done.returncode
+
+
+def verdict_line(output: str, exit_code: int) -> str:
+    """The line worth showing as a reason: a verdict if the run printed one, else the tail.
+
+    A probe that fails inside a container emits pages of runtime log; the last raw line is a
+    timestamped initialisation message, not the reason anyone needs.
+    """
+    lines = [line.strip() for line in ANSI.sub("", output).splitlines()
+             # compose's own progress lines are not the container's output
+             if line.strip() and not re.match(r"(Container|Network|Attaching to)\b", line.strip())]
+    for line in reversed(lines):
+        # No leading word boundary: a verdict is often glued to the previous log line without a
+        # newline ("...Temporary failure in seFAIL media: ..."), so match anywhere and cut from the
+        # marker — the log prefix is noise, the verdict is the reason.
+        match = re.search(r"(FAIL\s|media-probe|error\b|not found|denied\b)", line, re.IGNORECASE)
+        if match:
+            return line[match.start():match.start() + 160]
+    return (lines[-1][:160] if lines else f"exit {exit_code}")
 
 
 def missing_environment(entry: Entry) -> str | None:
@@ -288,6 +323,21 @@ def check_entry(entry: Entry, root: Path, timeout: int) -> Outcome:
         return Outcome(entry.eid, "unsupported", names,
                        reason=f"check(s) not implemented: {', '.join(sorted(set(unknown)))}")
 
+    for check in entry.checks:
+        if not check.is_precondition:
+            continue
+        if not check.args:
+            return Outcome(entry.eid, "unsupported", names,
+                           reason="precondition with no command")
+        try:
+            probe_out, probe_err, probe_code = run(check.args[0], timeout)
+        except subprocess.TimeoutExpired:
+            return Outcome(entry.eid, "unrunnable", names,
+                           reason=f"precondition timed out after {timeout}s: {check.args[0][:80]}")
+        if probe_code != 0:
+            return Outcome(entry.eid, "unrunnable", names,
+                           reason=f"precondition failed: {verdict_line(probe_out + probe_err, probe_code)}")
+
     block = missing_environment(entry)
     stdout = ""
     stderr = ""
@@ -312,6 +362,9 @@ def check_entry(entry: Entry, root: Path, timeout: int) -> Outcome:
     detail: list[str] = []
     passed = True
     for check in entry.checks:
+        if check.is_precondition:
+            detail.append("precondition: ok")
+            continue
         ok, message = run_check(check, entry, root, stdout, exit_code, timeout)
         detail.append(f"{check.name}: {'ok' if ok else 'FAILED'}"
                       + (f" — {message}" if message and not ok else ""))

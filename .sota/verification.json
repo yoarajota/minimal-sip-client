@@ -5,7 +5,7 @@
         "exit-zero",
         "output-contains"
       ],
-      "date": "2026-09-16",
+      "date": "2026-09-17",
       "outcome": "pass"
     },
     "E-002": {
@@ -13,7 +13,7 @@
         "exit-zero",
         "output-contains"
       ],
-      "date": "2026-09-16",
+      "date": "2026-09-17",
       "outcome": "pass"
     },
     "E-003": {
@@ -21,7 +21,7 @@
         "exit-zero",
         "output-contains"
       ],
-      "date": "2026-09-16",
+      "date": "2026-09-17",
       "outcome": "pass"
     },
     "E-004": {
@@ -29,7 +29,7 @@
         "exit-zero",
         "output-contains"
       ],
-      "date": "2026-09-16",
+      "date": "2026-09-17",
       "outcome": "pass"
     },
     "E-005": {
@@ -37,7 +37,7 @@
         "exit-zero",
         "output-contains"
       ],
-      "date": "2026-09-16",
+      "date": "2026-09-17",
       "outcome": "pass"
     },
     "E-006": {
@@ -56,18 +56,19 @@
         "exit-zero",
         "output-contains"
       ],
-      "date": "2026-09-16",
+      "date": "2026-09-17",
       "outcome": "pass"
     },
     "E-008": {
       "checks": [
+        "precondition",
         "exit-zero",
         "output-contains",
         "output-contains",
         "computed-from"
       ],
       "date": "2026-09-17",
-      "outcome": "fail"
+      "outcome": "pass"
     }
   },
   "generated": "2026-09-17",

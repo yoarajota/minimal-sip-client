@@ -34,7 +34,7 @@ concept_runs=(); concept_seconds=(); baseline_runs=(); fault_out=""
 
 if want concept; then
 echo "== leg 1/3: concept suite, ${RUNS} runs =="
-docker compose up -d asterisk >/dev/null
+docker compose up -d --wait asterisk >/dev/null
 for i in $(seq 1 "$RUNS"); do
   # `if ! out=$(...)` rather than a bare assignment: under `set -e` a failing command
   # substitution exits the script immediately, so the failure branch below never ran and a
@@ -58,6 +58,9 @@ fi
 
 if want baseline; then
 echo "== leg 2/3: PJSIP 2.17 baseline (pjsua), ${RUNS} runs =="
+# Leg 1 starts the PBX for itself; this leg must too, or running it alone (which is how E-008
+# verifies it) calls against a PBX that is not up.
+docker compose up -d --wait asterisk >/dev/null
 docker build -q -t minimal-sip-baseline:pjsua-2.17 bench/baseline >/dev/null
 for i in $(seq 1 "$RUNS"); do
   if ! out=$(docker compose run --rm baseline python /app/baseline.py 2>&1); then
