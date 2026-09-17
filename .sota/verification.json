@@ -1,61 +1,6 @@
 {
   "entries": {
-    "E-001": {
-      "checks": [
-        "exit-zero",
-        "output-contains"
-      ],
-      "date": "2026-09-16",
-      "outcome": "pass"
-    },
-    "E-002": {
-      "checks": [
-        "exit-zero",
-        "output-contains"
-      ],
-      "date": "2026-09-16",
-      "outcome": "pass"
-    },
-    "E-003": {
-      "checks": [
-        "exit-zero",
-        "output-contains"
-      ],
-      "date": "2026-09-16",
-      "outcome": "pass"
-    },
-    "E-004": {
-      "checks": [
-        "exit-zero",
-        "output-contains"
-      ],
-      "date": "2026-09-16",
-      "outcome": "pass"
-    },
-    "E-005": {
-      "checks": [
-        "exit-zero",
-        "output-contains"
-      ],
-      "date": "2026-09-16",
-      "outcome": "pass"
-    },
     "E-006": {
-      "checks": [
-        "exit-zero"
-      ],
-      "date": "2026-09-16",
-      "outcome": "pass"
-    },
-    "E-007": {
-      "checks": [
-        "exit-zero",
-        "output-contains"
-      ],
-      "date": "2026-09-16",
-      "outcome": "pass"
-    },
-    "E-008": {
       "checks": [
         "exit-zero"
       ],
