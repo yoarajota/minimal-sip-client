@@ -20,10 +20,13 @@ RFC 3550 (RTP), RFC 4566 (SDP), RFC 3264 (offer/answer), RFC 4475 (torture tests
 the RFC 3261 normative `MUST` occurrences (590) that the message-trace matrix will measure
 against. Appears in `docs/01-theory.md` and scenario S-001.
 
+**Kind:** survey
+
 **Environment:** Linux (Ubuntu 24.04), bash 5.x, curl 8.x, network access to
 rfc-editor.org, pjsip.org, docs.asterisk.org.
 
-```bash
+```sh
+# Fetches the sources and prints the count the Result states.
 mkdir -p /tmp/sip-sources && cd /tmp/sip-sources
 for rfc in 3261 3264 3550 4566 3665 4475; do
   curl -sf -o "rfc$rfc.txt" "https://www.rfc-editor.org/rfc/rfc$rfc.txt"
@@ -31,7 +34,7 @@ done
 curl -sf -o pjsip-about.html "https://www.pjsip.org/about.htm"
 curl -sf -o asterisk-respjsip.html \
   "https://docs.asterisk.org/Asterisk_20_Documentation/API_Documentation/Module_Configuration/res_pjsip/"
-ls -la
+printf 'fetched: %s\n' "$(ls rfc*.txt pjsip-about.html asterisk-respjsip.html 2>/dev/null | wc -l)"
 printf 'MUST count in RFC 3261: %s\n' "$(grep -o 'MUST' rfc3261.txt | wc -l)"
 ```
 
@@ -42,6 +45,9 @@ REGISTER 401→Authorization→200 flow (§10, RFC 3665 §2.1); INVITE→180→2
 flow (RFC 3665 §3.1); transaction timers T1=500ms/T2=4s/T4=5s/64×T1=32s (§17); UDP 5060 and
 the 1300-byte TCP rule (§18); hold via re-INVITE `a=sendonly` (RFC 3264 §5.1); RTP header
 layout (RFC 3550 §5.1).
+
+**Verifies:** exit-zero
+**Verifies:** output-contains "fetched: 8"
 
 **Status:** reproducing
 **Supports:** H-001, S-001, TRL 1 for `core`
@@ -63,6 +69,8 @@ REGISTER 401→Authorization→200 exchange (§10, §22.4), INVITE→180→200�
 BYE→200, with the hold offer answered `recvonly` (RFC 3264 §5.1). Observed: exactly that
 flow, with one addition — Asterisk challenges the **initial INVITE** with 401 (endpoint
 has `auth` configured), so digest handling on INVITE is load-bearing too.
+
+**Kind:** test
 
 **Environment:** Docker Desktop daemon 29.6.1 (WSL2 backend), docker compose v5.3.0.
 Images: `andrius/asterisk:20.7-cert11_debian-trixie` (Asterisk certified 20.7-cert11) and
@@ -90,6 +98,9 @@ symmetry through Asterisk `Echo()`); during hold received 0 (client sends nothin
 resume sent 102 / received 102. The hold offer's answer was `recvonly` and the resume
 offer's answer `sendrecv`, as RFC 3264 §5.1 requires.
 
+**Verifies:** exit-zero
+**Verifies:** output-contains "SUITE PASSED"
+
 **Status:** reproducing
 **Supports:** H-001, S-001, TRL 3 for `core`
 **Recorded:** 2026-08-14
@@ -106,17 +117,27 @@ non-2xx final → transaction-layer ACK, 401 challenge on REGISTER and INVITE, r
 and property/edge (parser fuzz never panics, CSeq monotonicity, INVITE carries its SDP body).
 Supports S-002 (fault-tolerance) and TRL 4 for `core`.
 
+**Kind:** test
+
 **Environment:** Go 1.22.2 on Linux (Ubuntu 24.04), no network, no Docker required.
 
-```bash
-make test     # from the repository root; exits 0 when the suite passes
+```sh
+# The same suite `make test` runs, printing the counts the Result states.
+out=$(go test ./internal/sip/ -v -count=1 2>&1); status=$?
+printf '%s\n' "$out" | grep -c -- '--- PASS:' | sed 's/^/pass lines: /'
+printf 'passed: %s\n' "$(printf '%s\n' "$out" | grep -c '^--- PASS:')"
+exit $status
 ```
 
-**Result:** exit 0. `ok github.com/yoarajota/minimal-sip-client/internal/sip` — 20 tests and a
-fuzz seed corpus pass (observed 2026-08-14). Key failure-mode behaviours verified: a silent
+**Result:** exit 0. `ok github.com/yoarajota/minimal-sip-client/internal/sip` — 28 tests and a
+fuzz seed corpus pass (observed 2026-09-16; the entry recorded 20 when it was written and the
+suite has grown since — the count is now printed by the command rather than asserted in prose). Key failure-mode behaviours verified: a silent
 server yields a 408-class `TransactionError`; a dropped first request is recovered by
 Timer E retransmission; a foreign-branch response is ignored; a 404 to an INVITE produces the
 transaction-layer ACK with the same branch and method ACK; wrong credentials surface the 401.
+
+**Verifies:** exit-zero
+**Verifies:** output-contains "passed: 28"
 
 **Status:** reproducing
 **Supports:** H-001, S-002, TRL 4 for `core`
@@ -130,6 +151,8 @@ transaction-layer ACK with the same branch and method ACK; wrong credentials sur
 Asterisk 20 PBX in containers — the relevant environment (TRL 5): register with digest auth,
 two-way RTP call, hold/resume via re-INVITE, teardown. Supports S-001 (functional
 completeness) and TRL 5 for `core`.
+
+**Kind:** test
 
 **Environment:** Docker Desktop daemon 29.6.1 (WSL2 backend), docker compose v5.3.0. Images:
 `andrius/asterisk:20.7-cert11_debian-trixie` (Asterisk certified 20.7-cert11) and
@@ -154,6 +177,9 @@ bye:      BYE -> 200
 RTP (PCMU, 440 Hz tone, 20 ms packets): active phase sent 152 / received 152 (echo symmetry
 through Asterisk `Echo()`); held phase received 0; resumed phase sent 102 / received 102.
 
+**Verifies:** exit-zero
+**Verifies:** output-contains "--- PASS: TestSuiteIntegration"
+
 **Status:** reproducing
 **Supports:** H-001, S-001, TRL 5 for `core`
 **Recorded:** 2026-08-14
@@ -168,6 +194,8 @@ integration readiness is core↔asterisk 5 and core↔client-runtime 4, each wit
 the blocker for the next level. The counts below are asserted against the documents that carry
 them, so the claim is checkable without re-running the analysis.
 
+**Kind:** survey
+
 **Environment:** none (document analysis over `docs/04-tradeoffs.md` and `.sota/readiness.yaml`).
 
 ```sh
@@ -181,6 +209,9 @@ grep -cE '^  irl: ' .sota/readiness.yaml
 
 **Result:** `5 2 6 3 2` (observed 2026-09-16, matching the earlier gate run of 2026-08-14).
 Findings and scores are in [docs/04-tradeoffs.md](04-tradeoffs.md) and `.sota/readiness.yaml`.
+
+**Verifies:** exit-zero
+**Verifies:** output-contains "5 2 6 3 2"
 
 **Status:** reproducing
 **Supports:** G4 gate, S-001, S-002, S-003
@@ -242,6 +273,8 @@ media counts and wall time recorded), and under fault injection — the PBX cont
 mid-call — surfaces the hangup timeout (408-class TransactionError after the 64×T1 window)
 and exits cleanly. Supports S-001, S-002, TRL 6 for `core`, and R-003's mitigation.
 
+**Kind:** benchmark
+
 **Environment:** containerised (compose network, no host ports):
 `andrius/asterisk:20.7-cert11_debian-trixie` + `golang:1.22-alpine`; Docker Desktop 29.6.1
 (WSL2), compose v5.3.0; client built with Go 1.22.2.
@@ -255,6 +288,8 @@ and exits cleanly. Supports S-001, S-002, TRL 6 for `core`, and R-003's mitigati
 leg: the PBX container was killed mid-call — media stopped, the hangup BYE timed out with a
 408-class TransactionError after the 64×T1 window (32 s), clean exit. Per-run media counts and
 wall times are in the run log (bench/run.sh prints them; reproduced by re-running the command).
+
+**Verifies:** exit-zero
 
 **Status:** reproducing
 **Supports:** H-001, S-001, S-002, TRL 6 for `core`
@@ -270,6 +305,8 @@ whole-RFC statements, 103/590 = 17.5% on the occurrence unit, and 156/590 = 26.4
 counting every occurrence in the cited sections without role filtering. All three sit well
 under the 50% falsifier line. Supports S-003 and the H-001 verdict.
 
+**Kind:** survey
+
 **Environment:** the extraction is reproducible offline after one fetch; the forced-statement
 judgment is an audit of `internal/sip` against the RFC text (both pinned).
 
@@ -280,6 +317,9 @@ python3 bench/extract-musts.py    # from the repository root; reproduces the cou
 **Result:** exit 0. Output ends with the three ratios (90/540 = 16.7%, 103/590 = 17.5%,
 156/590 = 26.4%) — observed 2026-08-14. The statement-by-statement enumeration with quoted
 RFC text is in docs/matrix.md.
+
+**Verifies:** exit-zero
+**Verifies:** output-contains "90 / 540 = 16.7%"
 
 **Status:** reproducing
 **Supports:** H-001, S-003, the falsifier check
@@ -306,6 +346,8 @@ Unforced occurrences by section (from E-001's per-section survey): §7 message b
 Plus the suite-external features the incumbent supports and the concept does not (forking,
 presence/SUBSCRIBE, PRACK/100rel, session timers, TCP/TLS, non-PCMU codecs).
 
+**Kind:** benchmark
+
 **Environment:** containerised (compose network): `minimal-sip-baseline:pjsua-2.17` image
 built from pjproject tag 2.17 (Dockerfile in bench/baseline/), same Asterisk and network as
 the concept leg.
@@ -318,6 +360,8 @@ the concept leg.
 `register=200 call=CONFIRMED media=active(rx ~101–103) hold=ok(sendonly) resume-reinvite=200
 media-restart=no(headless pjsua2 limitation) bye=ok`. The media-restart finding is
 reproducible across all 5 runs and documented in bench/README.md.
+
+**Verifies:** exit-zero
 
 **Status:** reproducing
 **Supports:** H-001 (baseline side), the cost clause

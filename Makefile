@@ -1,7 +1,7 @@
 TOOLS := .tools
 export GOBIN := $(CURDIR)/$(TOOLS)
 
-.PHONY: quality test tools suite
+.PHONY: quality test tools suite verify
 
 # Project-local quality toolchain (rule R10 — nothing installed globally).
 # Versions are pinned; every tool is built into .tools/ by `go install`.
@@ -36,3 +36,7 @@ test:
 # Integration suite against the real PBX (docker compose; see run-suite.sh).
 suite:
 	./run-suite.sh
+
+# Executes every evidence entry's declared checks.
+verify:
+	python3 tools/verify_evidence.py
